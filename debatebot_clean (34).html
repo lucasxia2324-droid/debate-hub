@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DebateBot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #111016;
+      --paper: #f8f4ef;
+      --accent: #b83535;
+      --muted: #8a7f78;
+      --rule: #e0d8d0;
+      --white: #ffffff;
+      --aff: #1a5c3a;
+      --shadow: 0 2px 20px rgba(17,16,22,0.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Instrument Sans', sans-serif; background: var(--paper); color: var(--ink); display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* HEADER */
+    header { border-bottom: 1px solid var(--rule); padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; background: var(--white); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; flex-shrink: 0; }
+    .logo { font-family: 'Fraunces', serif; font-weight: 900; font-size: 22px; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); font-style: italic; }
+    .main-nav { display: flex; gap: 4px; }
+    .nav-btn { padding: 7px 18px; border: 1.5px solid transparent; border-radius: 20px; background: transparent; font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--muted); transition: all 0.2s; }
+    .nav-btn:hover { color: var(--ink); background: var(--paper); }
+    .nav-btn.active { color: var(--ink); background: var(--paper); border-color: var(--rule); font-weight: 600; }
+
+    /* SCREENS */
+    .screen { display: none; flex: 1; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* HOME / LEARN */
+    #screen-home { background: #080818; position: relative; overflow: hidden; }
+    #space-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+    .home-content { position: relative; z-index: 1; width: 100%; max-width: 900px; margin: 0 auto; padding: 56px 24px; overflow-y: auto; }
+    .home-hero { text-align: center; margin-bottom: 48px; }
+    .home-eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: rgba(200,160,255,0.8); margin-bottom: 12px; }
+    .home-title { font-family: 'Fraunces', serif; font-size: 44px; font-weight: 900; color: #ffffff; margin-bottom: 12px; }
+    .home-sub { font-size: 15px; color: rgba(255,255,255,0.6); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+    .lessons-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .lesson-card { background: rgba(255,255,255,0.07); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 24px; cursor: pointer; transition: all 0.25s; }
+    .lesson-card:hover { background: rgba(255,255,255,0.13); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.25); }
+    .lesson-icon { font-size: 28px; margin-bottom: 10px; }
+    .lesson-badge { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(200,180,255,0.7); margin-bottom: 6px; }
+    .lesson-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+    .lesson-desc { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.6; margin-bottom: 16px; }
+    .lesson-cta { font-size: 11px; font-weight: 600; letter-spacing: 1px; color: rgba(200,180,255,0.8); }
+
+    /* LESSON PAGE */
+    #screen-lesson { background: var(--paper); overflow-y: auto; }
+    .lesson-page-header { border-bottom: 1px solid var(--rule); padding: 14px 40px; background: var(--white); display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+    .back-btn { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); font-family: 'Instrument Sans', sans-serif; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .back-btn:hover { color: var(--ink); }
+    .lesson-page-eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); }
+    .lesson-page-body { max-width: 720px; margin: 0 auto; padding: 48px 24px; }
+    .lesson-page-title { font-family: 'Fraunces', serif; font-size: 34px; font-weight: 900; margin-bottom: 8px; }
+    .lesson-page-sub { font-size: 15px; color: var(--muted); margin-bottom: 40px; }
+    .lesson-section { margin-bottom: 40px; }
+    .lesson-section-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+    .lesson-text { font-size: 14.5px; line-height: 1.75; color: var(--ink); margin-bottom: 12px; }
+    .structure-step { display: flex; gap: 14px; padding: 14px 16px; background: var(--white); border: 1px solid var(--rule); border-radius: 10px; margin-bottom: 8px; align-items: flex-start; }
+    .step-num { background: var(--ink); color: var(--paper); border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+    .step-text { font-size: 14px; line-height: 1.5; }
+    .annotated { background: var(--white); border: 1px solid var(--rule); border-radius: 12px; padding: 24px; margin: 16px 0; }
+    .annotation { display: flex; gap: 16px; margin-bottom: 18px; }
+    .ann-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); font-weight: 700; min-width: 110px; padding-top: 2px; }
+    .ann-text { font-size: 14px; line-height: 1.65; color: var(--ink); }
+    .metric-box { padding: 16px 18px; background: var(--white); border: 1px solid var(--rule); border-radius: 10px; margin-bottom: 12px; }
+    .metric-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .metric-desc { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+    .exercise-box { background: var(--white); border: 1px solid var(--rule); border-radius: 12px; padding: 24px; margin: 16px 0; }
+    .exercise-title { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .exercise-impact { background: var(--paper); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; color: var(--ink); margin-bottom: 8px; line-height: 1.55; }
+    .metric-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .metric-opt { padding: 8px 16px; border: 1.5px solid var(--rule); border-radius: 8px; background: white; font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .metric-opt:hover { border-color: var(--ink); }
+    .metric-opt.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
+    .metric-opt.wrong { background: #fce4ec; border-color: #e91e63; color: #c62828; }
+    .exercise-result { margin-top: 12px; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; line-height: 1.6; display: none; }
+    .exercise-result.show { display: block; }
+    .exercise-result.correct { background: #e8f5e9; color: #2e7d32; }
+    .exercise-result.wrong { background: #fce4ec; color: #c62828; }
+    .write-area { width: 100%; min-height: 140px; padding: 14px; border: 1.5px solid var(--rule); border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 14px; outline: none; resize: vertical; transition: border-color 0.2s; }
+    .write-area:focus { border-color: var(--ink); }
+    .write-type-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .write-type-btn { padding: 8px 16px; border: 1.5px solid var(--rule); border-radius: 8px; background: white; font-family: 'Instrument Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .write-type-btn:hover { border-color: var(--ink); }
+    .write-type-btn.active { background: var(--ink); color: white; border-color: var(--ink); }
+    .submit-btn { width: 100%; padding: 14px; background: var(--ink); color: white; border: none; border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-top: 10px; transition: all 0.2s; }
+    .submit-btn:hover { background: var(--accent); }
+    .feedback-box { margin-top: 16px; padding: 16px; background: var(--paper); border-radius: 10px; font-size: 14px; line-height: 1.7; display: none; }
+    .feedback-box.show { display: block; }
+
+    /* TOPIC LIBRARY */
+    #screen-topics { background: var(--paper); overflow-y: auto; }
+    .topics-content { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+    .topics-title { font-family: 'Fraunces', serif; font-size: 34px; font-weight: 900; margin-bottom: 8px; }
+    .topics-sub { font-size: 15px; color: var(--muted); margin-bottom: 40px; }
+    .area-block { margin-bottom: 48px; }
+    .area-heading { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); padding-bottom: 10px; border-bottom: 2px solid var(--ink); margin-bottom: 20px; }
+    .year-group { margin-bottom: 24px; }
+    .year-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .topic-card { border: 1px solid var(--rule); border-radius: 10px; background: var(--white); overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); transition: all 0.2s; }
+    .topic-card:hover { border-color: var(--ink); box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+    .topic-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 14px; font-weight: 500; }
+    .topic-arrow { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+    .topic-card.open .topic-arrow { transform: rotate(90deg); }
+    .topic-body { display: none; padding: 0 18px 18px; border-top: 1px solid var(--rule); }
+    .topic-card.open .topic-body { display: block; }
+    .topic-bg { font-size: 13.5px; color: var(--muted); line-height: 1.7; padding: 14px 0 12px; }
+    .debate-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .debate-btn { padding: 12px; border: none; border-radius: 8px; font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .debate-btn.aff { background: var(--aff); color: white; }
+    .debate-btn.neg { background: var(--accent); color: white; }
+    .debate-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* INFO SLIDE */
+    #screen-info { background: var(--paper); align-items: center; justify-content: center; padding: 48px 24px; }
+    .info-card { background: var(--white); border: 1px solid var(--rule); border-radius: 16px; padding: 48px; max-width: 560px; width: 100%; box-shadow: var(--shadow); }
+    .info-eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .info-topic { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; font-style: italic; margin-bottom: 16px; line-height: 1.3; }
+    .info-bg-text { font-size: 14px; color: var(--muted); line-height: 1.75; margin-bottom: 24px; }
+    .info-side-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .info-side-badge { display: inline-block; padding: 7px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 28px; }
+    .info-side-badge.aff { background: var(--aff); color: white; }
+    .info-side-badge.neg { background: var(--accent); color: white; }
+    .info-start-btn { width: 100%; padding: 16px; background: var(--ink); color: white; border: none; border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+    .info-start-btn:hover { background: var(--accent); }
+
+    /* DEBATE SCREEN */
+    #screen-debate { flex-direction: column; }
+    .debate-topbar { border-bottom: 1px solid var(--rule); padding: 12px 32px; background: var(--white); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .debate-topic-text { font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; max-width: 520px; }
+    .side-badge { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; font-weight: 600; }
+    .side-badge.aff { background: var(--aff); color: white; }
+    .side-badge.neg { background: var(--accent); color: white; }
+    .chat-area { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px; }
+    .msg { display: flex; gap: 12px; align-items: flex-start; animation: fadeUp 0.3s ease both; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .msg.user { flex-direction: row-reverse; }
+    .msg-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .msg.ai .msg-avatar { background: linear-gradient(135deg,#1a1a3e,#3a1a5e); border: 2px solid rgba(140,100,200,0.3); box-shadow: 0 0 10px rgba(120,80,200,0.2); }
+    .msg.user .msg-avatar { background: linear-gradient(135deg,#1a5c3a,#2a8a5a); border: 2px solid rgba(40,160,100,0.3); box-shadow: 0 0 10px rgba(40,160,100,0.2); }
+    .msg-content { display: flex; flex-direction: column; gap: 4px; max-width: 78%; }
+    .msg.user .msg-content { align-items: flex-end; }
+    .msg-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .msg-bubble { padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.7; }
+    .msg.ai .msg-bubble { background: var(--white); border: 1px solid var(--rule); border-bottom-left-radius: 4px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
+    .msg.user .msg-bubble { background: var(--ink); color: white; border-bottom-right-radius: 4px; }
+    .msg.system .msg-bubble { background: #e8d5d5; border: 1px solid #d4a8a8; color: #7a3535; font-size: 13px; font-weight: 500; border-radius: 8px; text-align: center; }
+    .msg.system { justify-content: center; }
+    .section-lbl { display: block; margin-top: 14px; margin-bottom: 5px; font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+    .typing-bubble { background: var(--white); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 18px; display: flex; gap: 5px; align-items: center; }
+    .dot { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+    .input-bar { border-top: 1px solid var(--rule); padding: 14px 32px; background: var(--white); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+    .input-bar textarea { flex: 1; padding: 12px 14px; border: 1.5px solid var(--rule); border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 14px; outline: none; resize: none; min-height: 46px; max-height: 130px; transition: border-color 0.2s; line-height: 1.5; }
+    .input-bar textarea:focus { border-color: var(--ink); }
+    .send-btn { padding: 11px 22px; background: var(--ink); color: white; border: none; border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; height: 46px; }
+    .send-btn:hover { background: var(--accent); }
+    .send-btn:disabled { background: var(--rule); cursor: not-allowed; }
+    .end-btn { padding: 11px 16px; background: transparent; color: var(--muted); border: 1.5px solid var(--rule); border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; height: 46px; }
+    .end-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* SCORECARD */
+    #screen-score { background: var(--paper); align-items: center; justify-content: flex-start; padding: 48px 24px; overflow-y: auto; }
+    .score-card { background: var(--white); border: 1px solid var(--rule); border-radius: 16px; padding: 48px; max-width: 660px; width: 100%; box-shadow: var(--shadow); }
+    .score-eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .score-title { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 900; margin-bottom: 28px; }
+    .score-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 32px; }
+    .score-box { border: 1px solid var(--rule); border-radius: 12px; padding: 18px; text-align: center; background: #faf8f5; }
+    .score-num { font-family: 'Fraunces', serif; font-size: 38px; font-weight: 900; line-height: 1; }
+    .score-num.overall { color: var(--accent); }
+    .score-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+    .score-section { margin-bottom: 24px; }
+    .score-section-lbl { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+    .score-text { font-size: 14.5px; line-height: 1.7; }
+    .score-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .score-list li { font-size: 14px; line-height: 1.6; padding-left: 18px; position: relative; }
+    .score-list li::before { content: '→'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+    .restart-btn { width: 100%; padding: 15px; background: var(--ink); color: white; border: none; border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-top: 28px; transition: all 0.2s; }
+    .restart-btn:hover { background: var(--accent); }
+
+    .sort-row { display:flex; gap:12px; align-items:flex-start; background:var(--white); border:1px solid var(--rule); border-radius:10px; padding:14px 16px; }
+    .sort-select { padding:6px 10px; border:1.5px solid var(--rule); border-radius:8px; font-family:'Instrument Sans',sans-serif; font-size:14px; outline:none; min-width:60px; background:var(--paper); }
+    .sort-text { font-size:14px; line-height:1.6; color:var(--ink); flex:1; }
+    .sort-row.correct { border-color:#4caf50; background:#f1f8f1; }
+    .sort-row.wrong { border-color:#e57373; background:#fdf1f1; }
+
+    @media(max-width:600px) {
+      header { padding: 12px 16px; }
+      .home-content, .topics-content, .lesson-page-body { padding: 32px 16px; }
+      .chat-area, .input-bar { padding-left: 16px; padding-right: 16px; }
+      .score-grid { grid-template-columns: 1fr; }
+    }
+
+    /* POINTS */
+    .points-banner {
+      background: linear-gradient(135deg, #1a1a3e 0%, #3a1a5e 60%, #1a3a5e 100%);
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      color: white;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .points-banner::before {
+      content: '✦';
+      position: absolute;
+      font-size: 120px;
+      opacity: 0.05;
+      top: -20px;
+      right: -10px;
+      line-height: 1;
+    }
+    .points-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(200,180,255,0.8); margin-bottom: 6px; }
+    .points-total { font-family: 'Fraunces', serif; font-size: 42px; font-weight: 900; line-height: 1; color: white; }
+    .points-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .points-earned {
+      display: inline-block;
+      background: linear-gradient(135deg, #1a1a3e, #3a1a5e);
+      color: white;
+      font-family: 'Fraunces', serif;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 10px 20px;
+      border-radius: 10px;
+      margin: 12px 0 4px;
+      letter-spacing: 1px;
+    }
+    .points-formula { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    @keyframes pointsPop {
+      0% { transform: scale(0.7); opacity: 0; }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .points-pop { animation: pointsPop 0.5s ease both; }
+
+    /* ANALYTICS CHART */
+    .analytics-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--rule); }
+    .analytics-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+    .chart-wrap { background: var(--paper); border-radius: 12px; padding: 20px 16px 8px; margin-bottom: 8px; }
+    .chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+    .chart-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+    .chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--ink); transition: height 0.4s ease; min-height: 4px; position: relative; }
+    .chart-bar:hover { background: var(--accent); }
+    .chart-bar-val { font-size: 11px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+    .chart-bar-lbl { font-size: 9px; color: var(--muted); text-align: center; margin-top: 5px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+    .chart-y-labels { display: flex; justify-content: space-between; padding: 0 4px; margin-top: 4px; }
+    .chart-no-data { text-align: center; font-size: 13px; color: var(--muted); padding: 24px 0; font-style: italic; }
+    .skill-rows { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .skill-row { display: flex; align-items: center; gap: 12px; }
+    .skill-name { font-size: 12px; font-weight: 500; color: var(--ink); min-width: 80px; }
+    .skill-bar-bg { flex: 1; height: 8px; background: var(--rule); border-radius: 4px; overflow: hidden; }
+    .skill-bar-fill { height: 100%; border-radius: 4px; background: var(--ink); transition: width 0.5s ease; }
+    .skill-score { font-size: 12px; font-weight: 600; color: var(--ink); min-width: 30px; text-align: right; }
+
+    /* ACCOUNT */
+    #screen-account { background: var(--paper); align-items: center; justify-content: center; padding: 48px 24px; overflow-y: auto; }
+    .account-card { background: var(--white); border: 1px solid var(--rule); border-radius: 16px; padding: 48px; max-width: 480px; width: 100%; box-shadow: var(--shadow); }
+    .account-eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .account-title { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+    .account-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+    .auth-tabs { display: flex; border-bottom: 2px solid var(--rule); margin-bottom: 24px; }
+    .auth-tab { padding: 10px 24px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); transition: all 0.2s; }
+    .auth-tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+    .auth-field { margin-bottom: 16px; }
+    .auth-field label { display: block; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .auth-field input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--rule); border-radius: 8px; font-family: 'Instrument Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; background: var(--paper); }
+    .auth-field input:focus { border-color: var(--ink); }
+    .auth-btn { width: 100%; padding: 14px; background: var(--ink); color: white; border: none; border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+    .auth-btn:hover { background: var(--accent); }
+    .auth-error { font-size: 13px; color: var(--accent); margin-top: 12px; min-height: 20px; text-align: center; }
+    .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1a1a3e, #3a1a5e); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 12px; box-shadow: 0 0 20px rgba(120,80,200,0.2); transition: transform 0.2s; }
+    .profile-avatar:hover { transform: scale(1.08); }
+    .avatar-opt { font-size: 24px; padding: 8px; border-radius: 8px; cursor: pointer; text-align: center; transition: background 0.15s; border: 2px solid transparent; }
+    .avatar-opt:hover { background: var(--paper); }
+    .avatar-opt.selected { border-color: var(--ink); background: var(--paper); }
+    .title-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; background: var(--ink); color: white; }
+    .profile-name { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .profile-email { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 28px; }
+    .profile-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-box { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; text-align: center; }
+    .stat-num { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 900; }
+    .stat-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+    .history-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 20px; }
+    .history-item { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; }
+    .history-topic { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+    .history-meta { font-size: 11px; color: var(--muted); display: flex; gap: 12px; }
+    .signout-btn { width: 100%; padding: 12px; background: transparent; color: var(--muted); border: 1.5px solid var(--rule); border-radius: 10px; font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+    .signout-btn:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div id="db-error-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#b83535;color:white;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;max-width:500px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)"></div>
+<header>
+  <div class="logo">Debate<span>Bot</span></div>
+  <nav class="main-nav">
+    <button class="nav-btn active" id="nav-home" onclick="showScreen('home')">Learn</button>
+    <button class="nav-btn" id="nav-topics" onclick="showScreen('topics')">Topic Library</button>
+    <button class="nav-btn" id="nav-topicinfo" onclick="showScreen('topicinfo')" style="display:none">Topic Info</button>
+    <button class="nav-btn" id="nav-account" onclick="showScreen('account')">Account</button>
+  </nav>
+</header>
+
+<!-- HOME / LEARN -->
+<div id="screen-home" class="screen active">
+  <canvas id="space-canvas"></canvas>
+  <div class="home-content">
+    <div class="home-hero">
+      <p class="home-eyebrow">ISDA Practice Debate</p>
+      <h1 class="home-title">Master the Art of Debate</h1>
+      <p class="home-sub">Learn the skills, study the structure, then head to the Topic Library to debate.</p>
+    </div>
+    <div class="lessons-grid">
+      <div class="lesson-card" onclick="openLesson('structure')">
+        <div class="lesson-icon">📋</div>
+        <div class="lesson-badge">Module 1</div>
+        <div class="lesson-title">Speech Structure</div>
+        <div class="lesson-desc">Learn the Introduction → Characterisation → Point → Explanation → Impact structure with worked examples.</div>
+        <div class="lesson-cta">Start lesson →</div>
+      </div>
+      <div class="lesson-card" onclick="openLesson('rebuttal')">
+        <div class="lesson-icon">⚔️</div>
+        <div class="lesson-badge">Module 2</div>
+        <div class="lesson-title">Rebuttals</div>
+        <div class="lesson-desc">Learn how to clash with your opponent's arguments and defend your own points.</div>
+        <div class="lesson-cta">Start lesson →</div>
+      </div>
+      <div class="lesson-card" onclick="openLesson('metrics')">
+        <div class="lesson-icon">⚖️</div>
+        <div class="lesson-badge">Module 3</div>
+        <div class="lesson-title">Weighing Metrics</div>
+        <div class="lesson-desc">Understand Magnitude, Probability and Proximity — then put them to the test with exercises.</div>
+        <div class="lesson-cta">Start lesson →</div>
+      </div>
+      <div class="lesson-card" onclick="openLesson('feedback')">
+        <div class="lesson-icon">✍️</div>
+        <div class="lesson-badge">Module 4</div>
+        <div class="lesson-title">Write &amp; Get Feedback</div>
+        <div class="lesson-desc">Write your own argument, rebuttal or impact and get instant AI feedback.</div>
+        <div class="lesson-cta">Start lesson →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LESSON PAGE -->
+<div id="screen-lesson" class="screen">
+  <div class="lesson-page-header">
+    <button class="back-btn" onclick="showScreen('home')">← Back</button>
+    <span class="lesson-page-eyebrow" id="lesson-eyebrow"></span>
+  </div>
+  <div class="lesson-page-body">
+    <h1 class="lesson-page-title" id="lesson-title"></h1>
+    <p class="lesson-page-sub" id="lesson-sub"></p>
+    <div id="lesson-body"></div>
+  </div>
+</div>
+
+<!-- TOPIC LIBRARY -->
+<div id="screen-topics" class="screen">
+  <div class="topics-content">
+    <h1 class="topics-title">Topic Library</h1>
+    <p class="topics-sub">Browse all topics by area and year level. Click a topic to read the background and start a debate.</p>
+    <div id="topics-container"></div>
+  </div>
+</div>
+
+<!-- TOPIC INFO -->
+<div id="screen-topicinfo" class="screen" style="align-items:center;justify-content:center;padding:48px 24px;">
+  <div class="info-card">
+    <p class="info-eyebrow">Topic Background</p>
+    <p class="info-topic" id="topicinfo-topic"></p>
+    <p class="info-bg-text" id="topicinfo-bg"></p>
+    <p class="info-side-label">Your Side</p>
+    <div class="info-side-badge" id="topicinfo-badge"></div>
+    <br><br>
+    <button class="info-start-btn" onclick="beginDebate()">Start Debate →</button>
+  </div>
+</div>
+
+<!-- DEBATE -->
+<div id="screen-debate" class="screen">
+  <div class="debate-topbar">
+    <div class="debate-topic-text" id="debate-topic-text"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="debate-title-bar" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:12px;background:rgba(17,16,22,0.08);color:var(--ink);letter-spacing:0.5px;"></span>
+      <span class="side-badge" id="debate-side-badge"></span>
+    </div>
+  </div>
+  <div class="chat-area" id="chat-area"></div>
+  <div class="input-bar">
+    <textarea id="user-input" placeholder="Type your argument…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">Send</button>
+    <button class="end-btn" onclick="endDebate()">End &amp; Score</button>
+  </div>
+</div>
+
+<!-- SCORECARD -->
+<div id="screen-score" class="screen">
+  <div class="score-card" id="score-card">
+    <div style="text-align:center;padding:40px;color:var(--muted);font-style:italic;">Analysing your performance…<br><br>
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:8px"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT SCREEN -->
+<div id="screen-account" class="screen">
+  <div class="account-card" id="account-card">
+
+    <!-- Auth Form -->
+    <div id="auth-form">
+      <p class="account-eyebrow">Your Account</p>
+      <h2 class="account-title">Welcome to DebateBot</h2>
+      <p class="account-sub">Create an account to save your debate history and track your progress over time.</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+        <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+      </div>
+      <div id="name-field" class="auth-field" style="display:none">
+        <label>Your Name</label>
+        <input type="text" id="auth-name" placeholder="e.g. Alex Smith">
+      </div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="your@email.com">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="At least 6 characters">
+      </div>
+      <button class="auth-btn" id="auth-submit" onclick="handleAuth()">Sign In</button>
+      <div class="auth-error" id="auth-error"></div>
+    </div>
+
+    <!-- Profile View -->
+    <div id="profile-view" style="display:none">
+      <div class="profile-avatar" id="profile-avatar" onclick="toggleAvatarPicker()" title="Click to change avatar" style="cursor:pointer;position:relative;">🧑</div>
+      <div id="avatar-picker" style="display:none;background:var(--white);border:1px solid var(--rule);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:var(--shadow);">
+        <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;text-align:center">Choose your avatar</p>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;" id="avatar-grid"></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--rule);">
+          <label for="avatar-upload" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border:1.5px dashed var(--rule);border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--ink)';this.style.color='var(--ink)'" onmouseout="this.style.borderColor='var(--rule)';this.style.color='var(--muted)'">
+            📁 Upload from your device
+          </label>
+          <input type="file" id="avatar-upload" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+        </div>
+      </div>
+      <p class="profile-name" id="profile-name-text"></p>
+      <p class="profile-email" id="profile-email-text"></p>
+      <div class="points-banner">
+        <p class="points-label">Total Points</p>
+        <p class="points-total" id="stat-points-banner">0</p>
+        <p class="points-sub">Keep debating to earn more</p>
+      </div>
+      <div id="profile-title-badge" style="text-align:center;margin-bottom:16px;display:none">
+        <span id="profile-title-text" style="display:inline-block;padding:6px 18px;border-radius:20px;background:var(--ink);color:white;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;"></span>
+      </div>
+      <div class="profile-stats">
+        <div class="stat-box"><div class="stat-num" id="stat-debates">0</div><div class="stat-lbl">Debates</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-avg">—</div><div class="stat-lbl">Avg Score</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-best">—</div><div class="stat-lbl">Best</div></div>
+      </div>
+      <div style="background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">Points</span>
+          <span style="font-family:'Fraunces',serif;font-size:20px;font-weight:900;" id="stat-points-progress">0</span>
+        </div>
+        <div style="background:var(--rule);border-radius:4px;height:6px;overflow:hidden;">
+          <div id="points-progress-bar" style="height:100%;background:var(--ink);border-radius:4px;width:0%;transition:width 0.5s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <span style="font-size:11px;color:var(--muted);" id="points-current-title">Novice</span>
+          <span style="font-size:11px;color:var(--muted);" id="points-next-title">Next: Debater (5,000)</span>
+        </div>
+      </div>
+      <div style="background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Total Points</span>
+          <span style="font-family:'Fraunces',serif;font-size:20px;font-weight:900;" id="stat-points-total">0</span>
+        </div>
+        <div id="next-title-row" style="display:none">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;">
+            <span id="next-title-label"></span>
+            <span id="next-title-pts"></span>
+          </div>
+          <div style="height:6px;background:var(--rule);border-radius:3px;overflow:hidden;">
+            <div id="title-progress-bar" style="height:100%;background:var(--ink);border-radius:3px;transition:width 0.5s;width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <p class="history-label">Recent Debates</p>
+      <div class="history-list" id="history-list">
+        <p style="font-size:13px;color:var(--muted);text-align:center;padding:12px">No debates yet — head to the Topic Library to start!</p>
+      </div>
+      <div class="analytics-section">
+        <p class="analytics-label">Score History</p>
+        <div class="chart-wrap">
+          <div class="chart-bars" id="score-chart-bars">
+            <div class="chart-no-data">Complete debates to see your score history</div>
+          </div>
+        </div>
+        <p class="analytics-label" style="margin-top:16px">Skill Breakdown</p>
+        <div class="skill-rows" id="skill-rows">
+          <div class="chart-no-data">No data yet</div>
+        </div>
+      </div>
+      <button class="signout-btn" onclick="signOut()" style="margin-top:20px">Sign Out</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+const GEMINI_KEY = 'AIzaSyBoAuey8SeJq7c8LoHumHPsU3OyX765FzA';
+let debateTopic = '', selectedSide = '', conversationHistory = [], turnCount = 0, currentBg = '';
+
+// ─── SCREEN ROUTER ───
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
+  else document.getElementById('nav-home').classList.add('active');
+  if (name === 'account' && currentUser) showProfile();
+}
+
+// ─── SPACE CANVAS ───
+(function(){
+  const canvas = document.getElementById('space-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], t = 0;
+  function resize() { W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
+  function init() {
+    stars = [];
+    for (let i = 0; i < 160; i++) stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.3+0.2, speed: Math.random()*0.12+0.02, tw: Math.random()*Math.PI*2, tws: Math.random()*0.03+0.01 });
+  }
+  function draw() {
+    t += 0.008;
+    ctx.fillStyle = '#060614'; ctx.fillRect(0,0,W,H);
+    [[0.2,0.5,80,40,160],[0.8,0.2,30,60,160],[0.6,0.8,140,30,80]].forEach(function(n,i){
+      const ox=Math.sin(t*0.3+i)*0.06*W, oy=Math.cos(t*0.25+i*1.3)*0.05*H;
+      const g=ctx.createRadialGradient(n[0]*W+ox,n[1]*H+oy,0,n[0]*W+ox,n[1]*H+oy,0.32*Math.min(W,H)*(0.85+Math.sin(t*0.4+i)*0.15));
+      g.addColorStop(0,'rgba('+n[2]+','+n[3]+','+n[4]+',0.45)');
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    });
+    stars.forEach(function(s){
+      s.tw+=s.tws; s.y+=s.speed*0.3; if(s.y>H){s.y=0;s.x=Math.random()*W;}
+      const a=0.4+Math.sin(s.tw)*0.5;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,'+a+')'; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',function(){resize();init();});
+  resize(); init(); draw();
+})();
+
+// ─── TOPIC LIBRARY ───
+const AREAS = [
+  { key:'env', name:'Environment', data: {
+    5: [
+      {t:'That we should ban plastic bags.',b:'Plastic bags are used once and discarded, contributing to pollution in oceans and on land. Many countries and states have already introduced bans. Critics argue reusable bags are not always practical or affordable for everyone.'},
+      {t:'That schools should have vegetable gardens.',b:'School vegetable gardens teach students about food, sustainability and healthy eating. Supporters say they provide hands-on environmental education. Critics argue they require resources and time that could be spent on academic subjects.'},
+      {t:'That we should walk or ride to school instead of driving.',b:'Car travel contributes to traffic congestion and air pollution around schools. Walking and cycling are healthier and more sustainable. Some families argue distance and safety make active travel impractical.'}
+    ],
+    6: [
+      {t:'That zoos should be abolished.',b:'Zoos keep animals in captivity for public viewing and claim to support conservation. Critics argue captivity causes suffering and that resources should go to protecting natural habitats. Supporters say zoos educate the public and run important breeding programs.'},
+      {t:'That we should introduce a carbon tax.',b:'A carbon tax makes polluting activities more expensive, aiming to reduce greenhouse gas emissions. Economists widely support it as an efficient policy tool. Critics argue it raises costs for families and businesses.'},
+      {t:'That cities should have more trees and less concrete.',b:'Urban trees reduce heat, improve air quality and support biodiversity. As cities grow, green space is often replaced by buildings and roads. Advocates argue urban greening should be a planning priority.'}
+    ],
+    7: [
+      {t:'That Australia should make solar panels mandatory on all new homes.',b:'Australia has one of the highest rates of rooftop solar in the world, yet most new homes are still built without panels. Proponents argue mandating solar would accelerate the clean energy transition. Critics say it raises construction costs and limits consumer choice.'},
+      {t:'That fast fashion should be taxed to reduce clothing waste.',b:'The fashion industry is one of the world\&#39;s largest polluters, with millions of tonnes of clothing ending up in landfill. A tax on fast fashion aims to discourage overconsumption. Opponents argue it unfairly penalises lower-income consumers.'},
+      {t:'That national parks should be closed to tourists to protect wildlife.',b:'Australia\&#39;s national parks are home to thousands of unique species threatened by human activity. Some argue limiting access would allow ecosystems to recover. Others say tourism funds conservation.'},
+      {t:'That governments should pay people to use public transport.',b:'Several cities have trialled free or subsidised public transport to reduce car use. Supporters say incentives are the most effective way to change commuter behaviour. Critics question the cost.'},
+      {t:'That schools should teach environmental science as a core subject.',b:'Environmental literacy is increasingly seen as essential for young people. Making it compulsory would ensure all students understand sustainability. Opponents argue the curriculum is already overcrowded.'},
+      {t:'That companies should be fined for producing too much packaging waste.',b:'Packaging makes up a large share of household rubbish. Fines would create financial incentives to redesign products. Critics argue this could increase costs for consumers.'},
+      {t:'That Australia should ban the export of recyclable materials overseas.',b:'Australia exports significant recyclable waste to Asia for processing. When overseas facilities are poorly regulated, this can cause more harm. Supporters say Australia must take responsibility for its own waste.'},
+      {t:'That cities should be required to plant a tree for every one they cut down.',b:'Urban trees provide shade, air quality benefits and biodiversity. Many councils remove trees for development without replacing them. A replacement policy would maintain urban canopy.'}
+    ],
+    8: [
+      {t:'That we should ban single-use plastics in Australia.',b:'Single-use plastics contribute significantly to ocean pollution and landfill. Australia has already banned some, but a comprehensive ban remains debated. Supporters argue the environmental benefits are clear, while opponents raise concerns about cost.'},
+      {t:'That nuclear energy should be part of Australia\'s response to climate change.',b:'Nuclear power produces virtually no greenhouse gas emissions and provides reliable baseload energy. Australia has no nuclear plants but significant uranium reserves. The debate centres on safety, cost, and waste disposal.'},
+      {t:'That zoos do more harm than good for wildlife conservation.',b:'Zoos claim to play a vital role through breeding programs and education. Critics argue captivity causes psychological harm and resources would be better spent on habitat protection.'},
+      {t:'That governments should prioritise economic growth over environmental protection.',b:'Governments often face tension between stimulating economic activity and protecting the environment. This debate asks whether economic development and environmental protection can coexist.'},
+      {t:'That individuals, not corporations, are most responsible for solving climate change.',b:'A significant portion of global emissions comes from individual choices. However, research shows a small number of large corporations account for the majority of industrial emissions.'},
+      {t:'That Australia should declare a national climate emergency.',b:'Several countries have formally declared climate emergencies to signal urgency and trigger stronger policy responses. Critics say it is largely symbolic and could create unnecessary economic anxiety.'},
+      {t:'That we should ban the sale of petrol-powered cars by 2035.',b:'Many countries have set targets to phase out petrol and diesel vehicles. Electric vehicles produce fewer emissions but remain more expensive. Australia has been slower than other nations to adopt such targets.'},
+      {t:'That developed countries owe developing nations financial support for climate adaptation.',b:'Developed nations have historically produced the most greenhouse gas emissions, while developing nations often face the worst climate impacts. Climate finance has been agreed in principle but implementation remains contested.'}
+    ]
+  }},
+  { key:'pol', name:'Politics', data: {
+    5: [
+      {t:'That students should have a say in school rules.',b:'Students are directly affected by school rules but rarely consulted when they are made. Supporters argue student input improves fairness and ownership. Critics say teachers and administrators are better placed to make decisions about school governance.'},
+      {t:'That pocket money should be earned not given.',b:'Some families give children pocket money unconditionally while others link it to chores. Those who favour earning argue it teaches financial responsibility and the value of work. Critics say childhood should not be transactional.'},
+      {t:'That children should be allowed to vote in local elections.',b:'Local government decisions directly affect schools, parks and community facilities that children use. Some argue children deserve representation. Critics say children lack the maturity and knowledge to vote responsibly.'}
+    ],
+    6: [
+      {t:'That the school day should be shorter.',b:'Many students and families feel the school day is too long and leads to fatigue. A shorter day could improve wellbeing and family time. Critics argue less time at school would reduce learning outcomes, particularly for disadvantaged students.'},
+      {t:'That Australia should have a bill of rights.',b:'Australia is one of the few democracies without a national bill of rights. Supporters argue it would better protect individual freedoms. Critics say existing laws are sufficient and a bill of rights would give too much power to courts.'},
+      {t:'That homework should be banned.',b:'Research on the benefits of homework is mixed, particularly for primary school students. Critics argue homework adds stress and reduces family time. Supporters say it builds good study habits and reinforces learning.'}
+    ],
+    7: [
+      {t:'That the voting age should be lowered to 16.',b:'In Australia, citizens can work, pay taxes, and drive at 16 but cannot vote until 18. Advocates argue lowering the voting age would give young people a say in decisions affecting their futures.'},
+      {t:'That voting should be compulsory for all citizens.',b:'Australia already has compulsory voting. Supporters argue it ensures governments represent the full population. Critics say it undermines the freedom to choose not to participate.'},
+      {t:'That Australia should become a republic.',b:'Australia remains a constitutional monarchy with the British monarch as head of state. Republicans argue this is outdated. Monarchists say the current system is stable and reform is unnecessary.'},
+      {t:'That all politicians should have a university degree.',b:'Some argue governing a modern nation requires formal education. Others contend lived experience and common sense are more valuable than academic qualifications.'}
+    ],
+    8: [
+      {t:'That social media companies should be regulated by the government.',b:'Platforms like TikTok and X have enormous influence over public discourse with limited oversight. Regulation could address misinformation and harmful content. Critics warn it poses risks to freedom of speech.'},
+      {t:'That politicians should be subject to term limits.',b:'Term limits prevent politicians from holding the same office indefinitely. Supporters argue it brings fresh perspectives. Opponents say it removes experienced leaders.'},
+      {t:'That independent candidates should receive equal media coverage to major parties.',b:'Minor parties and independents often receive significantly less media attention. Advocates say equal coverage would improve democratic representation.'},
+      {t:'That we should ban political donations from corporations.',b:'Large corporate donations raise questions about whether policy is influenced by financial interests. Opponents argue corporations have the right to support political causes.'},
+      {t:'That whistleblowers who expose government corruption should be protected by law.',b:'Whistleblowers have exposed major government scandals. However, many face prosecution for speaking out. Strong legal protections are seen as essential to democratic accountability.'}
+    ]
+  }},
+  { key:'soc', name:'Social Movements', data: {
+    5: [
+      {t:'That bullying should have stricter consequences.',b:'Bullying is widespread in schools and has serious impacts on mental health. Some argue stronger consequences would deter it. Critics say punishment alone does not address the causes and that education and support are more effective.'},
+      {t:'That everyone should do community service.',b:'Community service benefits local areas and builds empathy and civic responsibility. Supporters argue mandatory service should be part of education. Critics say forced volunteering removes the spirit of giving and may not be practical for all students.'},
+      {t:'That social media should have a minimum age of 16.',b:'Many social media platforms set a minimum age of 13 but this is rarely enforced. Supporters of a higher age limit argue younger children are more vulnerable to harm. Critics say determined young people will find ways around any age restriction.'}
+    ],
+    6: [
+      {t:'That gender should not determine what sports you play.',b:'Many sporting competitions are divided by gender. Some argue this limits participation and reinforces stereotypes. Others say biological differences between males and females affect performance and that mixed competition is not always fair.'},
+      {t:'That there should be no school uniforms.',b:'School uniforms are worn in most Australian schools. Supporters argue they reduce social inequality and improve school identity. Critics say they restrict self-expression and individual identity.'},
+      {t:'That all schools should be co-educational.',b:'Single-sex schools exist alongside co-educational schools in Australia. Supporters of co-education argue it better prepares students for a mixed society. Advocates of single-sex schooling say it improves academic outcomes for some students.'}
+    ],
+    7: [
+      {t:'That protests should be allowed to disrupt public spaces.',b:'Protests that block roads are a common form of activism. Supporters argue disruption is necessary to draw attention to urgent causes. Critics say it inconveniences ordinary people.'},
+      {t:'That cancel culture does more harm than good.',b:'Cancel culture refers to withdrawing support from public figures who said something offensive. Defenders say it holds people accountable. Critics argue it is often disproportionate.'},
+      {t:'That schools should teach students about social movements.',b:'Social movements like the civil rights movement have shaped modern society. Including them in curricula could help students understand how change happens. Some argue this risks politicising education.'},
+      {t:'That celebrities should use their platform to support social causes.',b:'Celebrities with large followings have enormous influence. Many use this to raise awareness. Critics argue they often lack expertise and can trivialise serious issues.'}
+    ],
+    8: [
+      {t:'That civil disobedience is a justified form of protest.',b:'Civil disobedience involves deliberately breaking laws to protest injustice. Supporters argue that when legal channels fail, breaking unjust laws is morally necessary. Critics say it undermines the rule of law.'},
+      {t:'That affirmative action policies are necessary for true equality.',b:'Affirmative action involves preferential treatment for underrepresented groups. Proponents say it corrects historical discrimination. Critics argue it is a form of reverse discrimination.'},
+      {t:'That corporations have a responsibility to take political stances.',b:'Major companies increasingly speak out on political issues. Some argue businesses have a duty to use their influence for social good. Others say corporations should focus on their core business.'},
+      {t:'That social movements achieve more through online activism than street protests.',b:'Social media has enabled rapid mobilisation around causes. Some argue online activism reaches more people. Critics say it produces shallow engagement.'},
+      {t:'That the #MeToo movement has done more good than harm.',b:'#MeToo emerged in 2017 and exposed widespread sexual harassment. It led to consequences for many powerful figures. Some critics argue it led to unfair public trials without due process.'}
+    ]
+  }},
+  { key:'med', name:'Media', data: {
+    5: [
+      {t:'That video games are more harmful than helpful.',b:'Video games are played by most children and can develop problem-solving and coordination skills. Critics argue excessive gaming leads to social isolation and exposure to violence. Supporters say the benefits depend on the type and amount of play.'},
+      {t:'That screens should be banned in bedrooms.',b:'Many children use screens in their bedrooms, particularly at night. Research links bedroom screen use to poor sleep and reduced academic performance. Critics argue parental monitoring is preferable to blanket bans.'},
+      {t:'That advertising should not target children.',b:'Children are exposed to significant advertising for food, toys and entertainment. Critics argue children cannot critically evaluate advertising and are particularly vulnerable to manipulation. Others say advertising regulation is already sufficient.'}
+    ],
+    6: [
+      {t:'That influencers should not advertise unhealthy foods to young people.',b:'Social media influencers are paid to promote products including junk food and sugary drinks to young audiences. Critics argue this contributes to poor dietary choices and childhood obesity. Supporters of restrictions say transparency and labelling are sufficient.'},
+      {t:'That the news should not show violent footage.',b:'News broadcasts sometimes include graphic footage of violence, accidents or war. Supporters argue this informs the public about serious events. Critics say it traumatises viewers and desensitises people to violence.'},
+      {t:'That children under 13 should not use social media.',b:'Most social media platforms set a minimum age of 13, but many younger children use them anyway. Supporters of stricter enforcement argue the platforms cause harm to developing minds. Others say digital literacy education is more effective than bans.'}
+    ],
+    7: [
+      {t:'That children under 14 should be banned from social media.',b:'Australia has passed legislation restricting children from social media. Supporters cite mental health risks. Critics argue young people need digital literacy and bans are difficult to enforce.'},
+      {t:'That influencers should be held to the same standards as journalists.',b:'Social media influencers with millions of followers shape public opinion. Unlike journalists, they face few obligations around accuracy. Some argue they should face the same ethical standards.'},
+      {t:'That news should be free for everyone to access.',b:'Many major news outlets now operate behind paywalls. Supporters of free news argue an informed public is essential for democracy. Critics say paywalls fund quality journalism.'},
+      {t:'That schools should teach students how to identify fake news.',b:'Misinformation spreads rapidly on social media. Media literacy education could help students critically evaluate sources. Some argue this responsibility belongs to parents.'}
+    ],
+    8: [
+      {t:'That social media does more harm than good to democracy.',b:'Social media has been credited with enabling grassroots movements but blamed for spreading misinformation. Research suggests algorithms promote outrage over accuracy.'},
+      {t:'That news outlets should be government funded to ensure independence.',b:'Public broadcasters like the ABC are funded by government but designed to operate independently. Supporters argue public funding frees journalism from commercial pressures.'},
+      {t:'That algorithms on social media platforms should be made public.',b:'Algorithms determine what content users see, yet they are largely secret. Transparency advocates argue public access would expose harmful biases. Platforms say revealing algorithms could enable manipulation.'},
+      {t:'That fake news should be treated as a criminal offence.',b:'Some countries have introduced laws criminalising deliberate misinformation. Proponents argue it is necessary to protect democratic integrity. Critics warn such laws could suppress legitimate speech.'},
+      {t:'That AI generated content should be labelled as such.',b:'AI can now produce text and images indistinguishable from human work. Mandatory labelling would help audiences make informed judgements. Critics argue labelling is difficult to enforce.'}
+    ]
+  }},
+  { key:'pop', name:'Popular Culture', data: {
+    5: [
+      {t:'That winning is more important than taking part.',b:'Competitive sport teaches children about effort and resilience, but some argue the emphasis on winning creates unhealthy pressure. Others say participation and enjoyment matter more than results.'},
+      {t:'That celebrities are bad role models for young people.',b:'Young people look up to celebrities they see in media and online. Some argue celebrities normalise unhealthy or irresponsible behaviour. Others say young people can distinguish between entertainment and real life.'},
+      {t:'That all sport should be non-competitive at primary school.',b:'Some primary schools have moved away from competitive sport to focus on fun and inclusion. Supporters argue competition causes stress and exclusion. Critics say healthy competition builds character.'}
+    ],
+    6: [
+      {t:'That reality TV should be banned for under 16s.',b:'Reality TV shows are watched by many young people and often feature adult themes, conflict and unrealistic body images. Supporters of a ban argue they cause psychological harm. Critics say parental oversight is sufficient.'},
+      {t:'That esports should be recognised as real sport.',b:'Esports involves professional competition, training and large audiences. Supporters argue skill and dedication make it equivalent to traditional sport. Critics say sport requires physical activity.'},
+      {t:'That streaming services have too much control over what we watch.',b:'Platforms like Netflix use algorithms to recommend content and make decisions about what gets made or cancelled. Critics argue this concentrates too much cultural power in a few companies.'}
+    ],
+    7: [
+      {t:'That violent video games should be banned for under 16s.',b:'Violent video games are among the most popular entertainment for young people. Some studies suggest links to aggression, while others find no significant effect.'},
+      {t:'That reality TV does more harm than good to young people.',b:'Reality TV shows attract large youth audiences and shape perceptions of beauty and relationships. Critics argue they promote unrealistic standards and toxic behaviour.'},
+      {t:'That sports stars have a responsibility to be role models.',b:'Athletes occupy a prominent place in popular culture and are idolised by young fans. Some argue this visibility comes with a duty to model positive values.'},
+      {t:'That social media influencers have too much power over young people.',b:'Influencers shape the purchasing decisions and body image of millions of young followers. Critics argue this power is exercised without accountability.'}
+    ],
+    8: [
+      {t:'That celebrity culture has a negative impact on society.',b:'Celebrity culture dominates mainstream media, shaping beauty standards and social values. Critics argue it promotes materialism and superficiality.'},
+      {t:'That streaming services have killed the music industry.',b:'Platforms like Spotify have transformed how people consume music, but many artists earn very little per stream. Supporters of streaming say it democratised music distribution.'},
+      {t:'That award shows like the Oscars are no longer relevant.',b:'Major award shows have seen declining viewership and faced criticism over lack of diversity. Some argue they remain important for recognising artistic achievement.'},
+      {t:'That cancel culture is a form of online bullying.',b:'Cancel culture involves mass social media criticism that can end careers. Critics argue it creates a climate of fear. Supporters say it is a legitimate form of accountability.'},
+      {t:'That actors and musicians should stay out of politics.',b:'Celebrities increasingly advocate for political causes. Critics argue they lack expertise. Defenders say everyone has a right to political speech.'},
+      {t:'That the film industry has a responsibility to represent diversity on screen.',b:'For decades, mainstream film underrepresented women and people of colour. Diversity initiatives have increased representation. Some argue quotas compromise artistic freedom.'},
+      {t:'That method acting causes more harm than good to performers.',b:'Method acting involves deep psychological immersion in a character. Some acclaimed actors have suffered mental health consequences from intense roles.'},
+      {t:'That Hollywood remakes do more harm than good to original films.',b:'Hollywood regularly remakes classic films. Supporters argue remakes introduce classic stories to new audiences. Critics say they dilute cultural legacy.'}
+    ]
+  }},
+
+  { key:'law', name:'Law and Justice', data: {
+    5: [
+      {t:'That cheating should result in automatic disqualification.',b:'Cheating undermines fairness in sport and academic settings. Some argue strict automatic consequences deter dishonesty. Others say context should be considered before disqualifying someone.'},
+      {t:'That there should be stricter rules for littering.',b:'Littering damages public spaces and the environment. Stricter fines and rules could deter littering. Critics argue enforcement is difficult and existing rules are sufficient.'},
+      {t:'That parents should be responsible for their children behaviour.',b:'Parents play a central role in shaping how children behave. Some argue parents should face legal consequences for serious misconduct by their children. Others say children must be held accountable themselves.'}
+    ],
+    6: [
+      {t:'That the legal age of criminal responsibility should be raised to 14.',b:'In Australia, children as young as 10 can be held criminally responsible. Many experts argue young children do not understand the consequences of their actions. Others say accountability is important regardless of age.'},
+      {t:'That young offenders should be rehabilitated not punished.',b:'Youth justice systems can focus on punishment or rehabilitation. Evidence suggests rehabilitation reduces reoffending. Critics argue consequences must be felt for justice to be served.'},
+      {t:'That surveillance cameras in public spaces invade privacy.',b:'CCTV cameras are widespread in cities and public areas. Supporters argue they deter crime and help solve cases. Critics say they create a surveillance state and erode civil liberties.'}
+    ],
+    7: [
+      {t:'That the jury system should be abolished.',b:'Juries of ordinary citizens decide guilt in serious criminal cases. Supporters say juries represent democratic justice. Critics argue jurors lack legal knowledge and can be influenced by emotion and bias.'},
+      {t:'That social media companies should be liable for harmful content on their platforms.',b:'Platforms like Facebook and TikTok host content that can cause psychological harm. Supporters of liability argue companies have the power and responsibility to prevent harm. Critics say it would restrict free speech.'},
+      {t:'That mandatory minimum sentences do more harm than good.',b:'Mandatory minimum sentences remove judicial discretion and require fixed prison terms for certain offences. Supporters say they deter crime and ensure consistency. Critics argue they are inflexible and disproportionate.'},
+      {t:'That the age of criminal responsibility should be raised to 14.',b:'Australia currently sets the minimum age of criminal responsibility at 10 in most states. Child advocates argue children under 14 cannot fully understand criminal liability. Others say accountability is essential for public safety.'}
+    ],
+    8: [
+      {t:'That Australia should abolish the death penalty globally, not just domestically.',b:'Australia does not have the death penalty but some citizens are executed abroad. Advocates argue Australia should use diplomatic pressure to oppose capital punishment globally. Critics say this interferes in other nations sovereign affairs.'},
+      {t:'That restorative justice is more effective than imprisonment.',b:'Restorative justice brings offenders and victims together to repair harm rather than impose punishment. Research shows it can reduce reoffending and provide better outcomes for victims. Critics argue it is not appropriate for serious crimes.'},
+      {t:'That police should be required to wear body cameras at all times.',b:'Body cameras create a record of police interactions, potentially improving accountability. Supporters argue they reduce misconduct and protect both officers and citizens. Critics raise concerns about privacy and data storage.'},
+      {t:'That whistleblowers who break the law to expose wrongdoing should not be prosecuted.',b:'Whistleblowers sometimes break confidentiality laws to expose corruption or illegal activity. Some argue the public interest justifies protection. Others say the rule of law must apply equally to everyone.'},
+      {t:'That Australia should have a federal anti-corruption commission with full investigative powers.',b:'State-based anti-corruption bodies exist but a powerful federal commission has been debated for years. Supporters argue it is essential for accountability. Critics worry about overreach and politicisation.'}
+    ]
+  }},
+
+  { key:'ethics', name:'Ethical Issues', data: {
+    5: [
+      {t:'That animals should have the same rights as humans.',b:'Animals can feel pain and experience emotions, which leads some to argue they deserve the same protections as people. Others say human needs and animal needs cannot be treated equally in law or practice.'},
+      {t:'That it is wrong to eat meat.',b:'The meat industry has significant environmental and animal welfare impacts. Some argue choosing to eat meat causes unnecessary harm to animals. Others say meat eating is a personal choice with cultural and nutritional significance.'},
+      {t:'That it is never okay to lie.',b:'Honesty is generally valued as a moral virtue. However some argue that lying can be justified to protect others from harm. This debate explores the limits of absolute moral rules.'}
+    ],
+    6: [
+      {t:'That scientific experiments on animals should be banned.',b:'Many medicines and products are tested on animals before being used by humans. Supporters of a ban argue this causes unnecessary suffering. Others say animal testing is essential for medical progress and human safety.'},
+      {t:'That euthanasia should be legal.',b:'Voluntary assisted dying is legal in all Australian states but remains controversial. Supporters argue people have the right to choose a dignified death. Critics raise concerns about pressure on vulnerable people and the role of doctors.'},
+      {t:'That it is ethical to expose wrongdoing by any means necessary.',b:'Whistleblowers sometimes use illegal means to access and reveal evidence of corruption or harm. Some argue the public interest justifies breaking the law. Others say illegal methods cannot be ethically justified regardless of the outcome.'}
+    ],
+    7: [
+      {t:'That it is ethical to use animals for medical research.',b:'Animal testing has contributed to major medical breakthroughs but involves significant suffering for animals. Supporters argue the benefits to humans justify the practice. Critics say alternatives should be used and developed.'},
+      {t:'That we have a moral obligation to help people in other countries.',b:'Global inequality means people in wealthy nations live vastly different lives from those in poverty. Some argue wealth creates a moral duty to help. Others say national obligations come first.'},
+      {t:'That gene editing to eliminate hereditary diseases is ethically justified.',b:'CRISPR and other gene editing technologies can potentially eliminate inherited diseases before birth. Supporters argue reducing suffering is morally good. Critics warn of unintended consequences and designer baby concerns.'},
+      {t:'That it is ethical to eat meat in the modern world.',b:'Modern industrial farming raises significant animal welfare and environmental concerns. Some argue consumers have a moral responsibility to consider this. Others say personal dietary choices are a matter of individual freedom.'}
+    ],
+    8: [
+      {t:'That artificial intelligence should be subject to the same ethical standards as humans.',b:'AI systems make decisions that affect people in areas like hiring, policing and healthcare. Supporters argue AI must be held accountable. Critics say AI is a tool and responsibility lies with its creators.'},
+      {t:'That wealthy nations have an ethical obligation to accept climate refugees.',b:'Climate change is displacing millions of people from vulnerable regions. Some argue wealthy nations that contributed most to emissions have a moral duty to accept those displaced. Others say migration policy must balance national interests.'},
+      {t:'That parents have the right to choose their child values and beliefs.',b:'Parents play a central role in shaping children&#39;s worldviews through religion, culture and education. Some argue this is a fundamental parental right. Others say children have the right to form their own values free from indoctrination.'},
+      {t:'That social media companies have a moral responsibility for the mental health of their users.',b:'Research links heavy social media use to anxiety, depression and poor self-image, particularly in young people. Critics of social media argue platforms are designed to exploit psychological vulnerabilities for profit.'},
+      {t:'That it is never ethical to prioritise economic growth over human rights.',b:'Governments and corporations sometimes argue economic development justifies practices that restrict human rights. Critics say no level of prosperity justifies rights violations. Others argue the relationship between growth and rights is complex.'}
+    ]
+  }}
+];
+
+function buildTopics() {
+  const container = document.getElementById('topics-container');
+  AREAS.forEach(function(area) {
+    const block = document.createElement('div');
+    block.className = 'area-block';
+    block.innerHTML = '<div class="area-heading">' + area.name + '</div>';
+    [5, 6, 7, 8].forEach(function(yr) {
+      const topics = area.data[yr] || [];
+      if (!topics.length) return;
+      const group = document.createElement('div');
+      group.className = 'year-group';
+      group.innerHTML = '<div class="year-label">Year ' + yr + '</div>';
+      topics.forEach(function(item) {
+        const card = document.createElement('div');
+        card.className = 'topic-card';
+        card.innerHTML = '<div class="topic-header" onclick="toggleTopic(this.parentElement)">' + item.t + '<span class="topic-arrow">▶</span></div>' +
+          '<div class="topic-body"><div class="topic-bg">' + item.b + '</div>' +
+          '<div class="debate-btns">' +
+          '<button class="debate-btn aff" onclick="startFromLibrary(\'' + encodeURIComponent(item.t) + '\',\'' + encodeURIComponent(item.b) + '\',\'affirmative\')">✓ Affirmative</button>' +
+          '<button class="debate-btn neg" onclick="startFromLibrary(\'' + encodeURIComponent(item.t) + '\',\'' + encodeURIComponent(item.b) + '\',\'negative\')">✗ Negative</button>' +
+          '</div></div>';
+        group.appendChild(card);
+      });
+      block.appendChild(group);
+    });
+    container.appendChild(block);
+  });
+}
+
+function toggleTopic(card) { card.classList.toggle('open'); }
+
+function startFromLibrary(topicEnc, bgEnc, side) {
+  debateTopic = decodeURIComponent(topicEnc);
+  currentBg = decodeURIComponent(bgEnc);
+  selectedSide = side;
+  document.getElementById('topicinfo-topic').textContent = debateTopic;
+  document.getElementById('topicinfo-bg').textContent = currentBg;
+  const badge = document.getElementById('topicinfo-badge');
+  badge.textContent = side === 'affirmative' ? 'Affirmative — Argue FOR' : 'Negative — Argue AGAINST';
+  badge.className = 'info-side-badge ' + side;
+  document.getElementById('nav-topicinfo').style.display = 'inline-block';
+  showScreen('topicinfo');
+}
+
+// ─── LESSONS ───
+const LESSON_DATA = {
+  structure: {
+    eyebrow: 'Module 1',
+    title: 'Speech Structure',
+    sub: 'Every ISDA speech follows the same structure. Master it and you will always know what to say.',
+    body: `
+      <div class="lesson-section">
+        <div class="lesson-section-label">The Structure</div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Select Speaker</label>
+          <select onchange="showSpeakerStructure(this.value); showSpeakerExample(this.value)" style="padding:10px 14px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;background:var(--paper);">
+            <option value="aff1">1st Affirmative</option>
+            <option value="neg1">1st Negative</option>
+            <option value="aff2">2nd Affirmative</option>
+            <option value="neg2">2nd Negative</option>
+            <option value="aff3">3rd Affirmative</option>
+            <option value="neg3">3rd Negative</option>
+          </select>
+        </div>
+
+        <div id="structure-aff1">
+          <div class="structure-step"><div class="step-num">1</div><div class="step-text"><strong>Introduction</strong> — 1-2 sentences. State the status quo injustice and what your team changes. Short, sharp, emotive.</div></div>
+          <div class="structure-step"><div class="step-num">2</div><div class="step-text"><strong>Characterisation</strong> — 2 dot points. Key facts underpinning your entire case. No arguments yet.</div></div>
+          <div class="structure-step"><div class="step-num">3</div><div class="step-text"><strong>Point Headline</strong> — Name Argument 1 in 3-5 words.</div></div>
+          <div class="structure-step"><div class="step-num">4</div><div class="step-text"><strong>Explanation</strong> — Numbered reasons, each tied back to characterisation.</div></div>
+          <div class="structure-step"><div class="step-num">5</div><div class="step-text"><strong>Impact</strong> — Numbered consequences. Short, punchy, metric woven in naturally.</div></div>
+          <div class="structure-step"><div class="step-num">→</div><div class="step-text">Repeat steps 3–5 for Argument 2. Save your 3rd argument for 2nd speaker.</div></div>
+          <div class="structure-step"><div class="step-num">✓</div><div class="step-text"><strong>Closing</strong> — "For these reasons, I am proud to affirm today's motion."</div></div>
+        </div>
+
+        <div id="structure-neg1" style="display:none">
+          <div class="structure-step"><div class="step-num">1</div><div class="step-text"><strong>Introduction</strong> — 2 sentences. Immediately attack the biggest flaw in the Affirmative world. Sharp and direct.</div></div>
+          <div class="structure-step"><div class="step-num">2</div><div class="step-text"><strong>Characterisation</strong> — 2 dot points. Key facts underpinning the Negative case.</div></div>
+          <div class="structure-step"><div class="step-num">3</div><div class="step-text"><strong>Identify Claim</strong> — State the 1st Aff argument you are attacking in one sentence.</div></div>
+          <div class="structure-step"><div class="step-num">4</div><div class="step-text"><strong>Mechanism + Responses</strong> — Name each mechanism. Give numbered responses. Numbering resets per mechanism.</div></div>
+          <div class="structure-step"><div class="step-num">→</div><div class="step-text">Repeat for a second Aff point if needed.</div></div>
+          <div class="structure-step"><div class="step-num">5</div><div class="step-text"><strong>Point Headline</strong> — Name your own Argument 1 in 3-5 words.</div></div>
+          <div class="structure-step"><div class="step-num">6</div><div class="step-text"><strong>Explanation</strong> — Numbered reasons tied to characterisation.</div></div>
+          <div class="structure-step"><div class="step-num">7</div><div class="step-text"><strong>Impact</strong> — Numbered consequences with metric woven in.</div></div>
+          <div class="structure-step"><div class="step-num">→</div><div class="step-text">Repeat steps 5–7 for Arguments 2 and 3.</div></div>
+          <div class="structure-step"><div class="step-num">✓</div><div class="step-text"><strong>Closing</strong> — "For these reasons, I am proud to negate today's motion."</div></div>
+        </div>
+
+        <div id="structure-aff2" style="display:none">
+          <div class="structure-step"><div class="step-num">1</div><div class="step-text"><strong>Introduction</strong> — Signpost what you are doing: rebutting, defending, and extending.</div></div>
+          <div class="structure-step"><div class="step-num">2</div><div class="step-text"><strong>Identify Claim</strong> — State each 1st Neg argument you are attacking.</div></div>
+          <div class="structure-step"><div class="step-num">3</div><div class="step-text"><strong>Mechanism + Responses</strong> — Name each mechanism. Give numbered responses per mechanism.</div></div>
+          <div class="structure-step"><div class="step-num">→</div><div class="step-text">Repeat for each 1st Neg argument.</div></div>
+          <div class="structure-step"><div class="step-num">4</div><div class="step-text"><strong>Point Headline</strong> — Name the saved 3rd Affirmative argument in 3-5 words.</div></div>
+          <div class="structure-step"><div class="step-num">5</div><div class="step-text"><strong>Explanation</strong> — Numbered reasons tied to characterisation.</div></div>
+          <div class="structure-step"><div class="step-num">6</div><div class="step-text"><strong>Impact</strong> — Numbered consequences with metric woven in.</div></div>
+          <div class="structure-step"><div class="step-num">✓</div><div class="step-text"><strong>Closing</strong> — "For these reasons, I am proud to affirm today's motion."</div></div>
+        </div>
+
+        <div id="structure-neg2" style="display:none">
+          <div class="structure-step"><div class="step-num">1</div><div class="step-text"><strong>Introduction</strong> — Signpost the 2 areas of contention you will clash on by name.</div></div>
+          <div class="structure-step"><div class="step-num">2</div><div class="step-text"><strong>Area 1: [name it]</strong> — Identify the area of contention.</div></div>
+          <div class="structure-step"><div class="step-num">3</div><div class="step-text"><strong>Their Claim + Mechanism + Responses</strong> — For each Aff argument in this area, identify the claim, name each mechanism, give numbered responses.</div></div>
+          <div class="structure-step"><div class="step-num">4</div><div class="step-text"><strong>Area 2: [name it]</strong> — Repeat the same structure for the second area.</div></div>
+          <div class="structure-step"><div class="step-num">5</div><div class="step-text"><strong>Weighing</strong> — Explain why your team has won each area and the debate overall. Weave in metrics naturally.</div></div>
+          <div class="structure-step"><div class="step-num">✓</div><div class="step-text"><strong>Closing</strong> — "For these reasons, I am proud to negate today's motion." No new arguments.</div></div>
+        </div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Annotated Example</div>
+        <p class="lesson-text" style="margin-bottom:14px">Topic: <em>That we should ban single-use plastics in Australia.</em></p>
+        <div id="speaker-example-aff1" class="speaker-example">
+          <p class="lesson-text" style="margin-bottom:12px;font-size:13px;color:var(--muted)">1st Affirmative — 2 arguments, sets up team case, saves 3rd argument for 2nd speaker.</p>
+          <div class="annotated">
+            <div class="annotation"><span class="ann-label">Introduction</span><span class="ann-text">In the status quo, the environmentally vulnerable have been failed by a government that allows plastic waste to go unchecked. As the Affirmative team, this is what we change.</span></div>
+            <div class="annotation"><span class="ann-label">Characterisation</span><span class="ann-text">• Single-use plastics make up the majority of ocean and waterway pollution<br>• The burden of environmental damage falls hardest on low-income communities</span></div>
+            <div class="annotation"><span class="ann-label">Point Headline</span><span class="ann-text"><strong>Argument 1: Environmental Damage is Irreversible</strong></span></div>
+            <div class="annotation"><span class="ann-label">Explanation</span><span class="ann-text">1. Single-use plastics break into microplastics that enter the food chain<br>2. Once in waterways, they cannot be removed at scale<br>3. Ties back to our characterisation that plastic pollution is the dominant source of waterway contamination</span></div>
+            <div class="annotation"><span class="ann-label">Impact</span><span class="ann-text">1. A great number of marine species face extinction within decades<br>2. The scale of harm is irreversible — no future government can undo this</span></div>
+            <div class="annotation"><span class="ann-label">Point Headline</span><span class="ann-text"><strong>Argument 2: Low-Income Communities Bear the Cost</strong></span></div>
+            <div class="annotation"><span class="ann-label">Explanation</span><span class="ann-text">1. Polluted waterways and beaches are disproportionately located near low-income suburbs<br>2. Wealthy communities have the resources to move or mitigate harm — low-income communities do not<br>3. Ties back to our characterisation that the burden of environmental damage falls hardest on low-income communities</span></div>
+            <div class="annotation"><span class="ann-label">Impact</span><span class="ann-text">1. Right now, today — communities near polluted waterways pay with their health and their property value<br>2. Near certain — without a ban, this inequity will only deepen</span></div>
+            <div class="annotation"><span class="ann-label">Closing</span><span class="ann-text">For these reasons, I am proud to affirm today's motion.</span></div>
+          </div>
+        </div>
+
+        <div id="speaker-example-neg1" class="speaker-example" style="display:none">
+          <p class="lesson-text" style="margin-bottom:12px;font-size:13px;color:var(--muted)">1st Negative — rebuttal of 1st Aff, then 3 arguments of their own.</p>
+          <div class="annotated">
+            <div class="annotation"><span class="ann-label">Introduction</span><span class="ann-text">The Affirmative team assumes a ban is the only solution — but banning one material simply shifts the problem elsewhere. As the Negative team, we reject this simplistic approach.</span></div>
+            <div class="annotation"><span class="ann-label">Characterisation</span><span class="ann-text">• Government bans on consumer products frequently produce unintended consequences<br>• The majority of global plastic pollution originates from industrial waste, not consumer bags</span></div>
+            <div class="annotation"><span class="ann-label">Identify Claim</span><span class="ann-text">My opponent claims a ban on single-use plastics will reduce environmental harm.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: Consumers will switch to reusable alternatives</span><span class="ann-text">1. Cotton bags require far more water and energy to produce than a single plastic bag<br>2. Most consumers own reusable bags but consistently forget them — the behavioural change is not guaranteed</span></div>
+            <div class="annotation"><span class="ann-label">Point Headline</span><span class="ann-text"><strong>Argument 1: Alternatives Cause New Harm</strong></span></div>
+            <div class="annotation"><span class="ann-label">Explanation</span><span class="ann-text">1. Paper bags increase deforestation and require significantly more energy to produce<br>2. Biodegradable plastics often require industrial composting facilities that do not exist at scale<br>3. Ties back to our characterisation that bans frequently produce unintended consequences</span></div>
+            <div class="annotation"><span class="ann-label">Impact</span><span class="ann-text">1. A ban risks trading one environmental problem for another<br>2. The probability of unintended harm is near certain — industry is not ready</span></div>
+            <div class="annotation"><span class="ann-label">Closing</span><span class="ann-text">For these reasons, I am proud to negate today's motion.</span></div>
+          </div>
+        </div>
+
+        <div id="speaker-example-aff2" class="speaker-example" style="display:none">
+          <p class="lesson-text" style="margin-bottom:12px;font-size:13px;color:var(--muted)">2nd Affirmative — rebuts 1st Neg, defends 1st Aff points, adds the saved 3rd argument.</p>
+          <div class="annotated">
+            <div class="annotation"><span class="ann-label">Introduction</span><span class="ann-text">The Negative has failed to address the core of our case. I will respond to their arguments, defend our team's points, and extend our case with a third argument.</span></div>
+            <div class="annotation"><span class="ann-label">Identify Claim</span><span class="ann-text">My opponent claims alternatives to plastic cause more harm than the plastic itself.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: Cotton bags use more resources</span><span class="ann-text">1. This ignores that reusable bags are used hundreds of times — the per-use environmental cost is far lower<br>2. Innovation in sustainable materials is accelerating precisely because of policy pressure like this ban</span></div>
+            <div class="annotation"><span class="ann-label">Point Headline</span><span class="ann-text"><strong>Argument 3: Industry Will Adapt</strong></span></div>
+            <div class="annotation"><span class="ann-label">Explanation</span><span class="ann-text">1. The EU plastic bag ban led to a 90% reduction in plastic bag use within two years<br>2. Industry always adapts when policy creates clear incentives<br>3. Ties back to our characterisation that plastic pollution is the dominant source of waterway contamination — this is the targeted solution</span></div>
+            <div class="annotation"><span class="ann-label">Impact</span><span class="ann-text">1. A great number of countries have already demonstrated this works — the evidence is clear<br>2. Near certain — where policy leads, industry follows</span></div>
+            <div class="annotation"><span class="ann-label">Closing</span><span class="ann-text">For these reasons, I am proud to affirm today's motion.</span></div>
+          </div>
+        </div>
+
+        <div id="speaker-example-neg2" class="speaker-example" style="display:none">
+          <p class="lesson-text" style="margin-bottom:12px;font-size:13px;color:var(--muted)">2nd Negative — clash on 2 key areas, no new arguments, then weighing.</p>
+          <div class="annotated">
+            <div class="annotation"><span class="ann-label">Introduction</span><span class="ann-text">This debate comes down to two key areas: whether a ban actually reduces harm, and whether the costs outweigh the benefits. The Negative wins both.</span></div>
+            <div class="annotation"><span class="ann-label">Area 1: Whether a ban reduces harm</span><span class="ann-text"></span></div>
+            <div class="annotation"><span class="ann-label">Their Claim</span><span class="ann-text">The Affirmative argues a ban reduces plastic pollution.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: The EU example proves it works</span><span class="ann-text">1. The EU ban reduced bag use but overall plastic production continued to rise<br>2. The 90% reduction in bags is a narrow measure — it does not capture the full environmental picture</span></div>
+            <div class="annotation"><span class="ann-label">Area 2: Whether costs outweigh benefits</span><span class="ann-text"></span></div>
+            <div class="annotation"><span class="ann-label">Their Claim</span><span class="ann-text">The Affirmative argues the environmental benefits justify the economic disruption.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: Industry will adapt</span><span class="ann-text">1. Adaptation takes time — in the transition, jobs are lost and prices rise<br>2. Low-income consumers bear this cost disproportionately, undermining the very equity argument the Affirmative makes</span></div>
+            <div class="annotation"><span class="ann-label">Weighing</span><span class="ann-text">The Negative wins on magnitude — the unintended costs of a ban fall hardest on those the Affirmative claims to protect. We win on probability — the evidence that alternatives cause new harm is near certain. The Negative team has won this debate.</span></div>
+            <div class="annotation"><span class="ann-label">Closing</span><span class="ann-text">For these reasons, I am proud to negate today's motion.</span></div>
+          </div>
+        </div>
+
+        <div id="speaker-example-aff3" class="speaker-example" style="display:none">
+          <p class="lesson-text" style="margin-bottom:12px;font-size:13px;color:var(--muted)">3rd Affirmative — clash on 2 key areas, no new arguments, then weighing. This is the reply speech.</p>
+          <div class="annotated">
+            <div class="annotation"><span class="ann-label">Introduction</span><span class="ann-text">This debate comes down to two key areas: whether the ban actually reduces harm, and whether the Affirmative world is fairer. We win both.</span></div>
+            <div class="annotation"><span class="ann-label">Area 1: Whether the ban reduces harm</span><span class="ann-text"></span></div>
+            <div class="annotation"><span class="ann-label">Their Claim</span><span class="ann-text">The Negative argues alternatives like cotton bags cause more environmental harm.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: Cotton bags use more resources</span><span class="ann-text">1. Reusable bags are used hundreds of times — the per-use footprint is far lower than plastic<br>2. The Negative compares a single use of each, which is a dishonest comparison</span></div>
+            <div class="annotation"><span class="ann-label">Area 2: Whether the Affirmative world is fairer</span><span class="ann-text"></span></div>
+            <div class="annotation"><span class="ann-label">Their Claim</span><span class="ann-text">The Negative argues low-income consumers bear the cost of the transition.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: Price rises from the ban</span><span class="ann-text">1. The price difference between a plastic bag and a reusable one is minimal — this harm is overstated<br>2. The Affirmative world protects low-income communities from pollution — the Negative world leaves them exposed</span></div>
+            <div class="annotation"><span class="ann-label">Weighing</span><span class="ann-text">The Affirmative wins on magnitude — the long-term environmental and health benefits affect a great number of people. We win on proximity — pollution is already harming communities today. The Affirmative has won this debate.</span></div>
+            <div class="annotation"><span class="ann-label">Closing</span><span class="ann-text">For these reasons, I am proud to affirm today's motion.</span></div>
+          </div>
+        </div>
+
+        <div id="speaker-example-neg3" class="speaker-example" style="display:none">
+          <p class="lesson-text" style="margin-bottom:12px;font-size:13px;color:var(--muted)">3rd Negative — clash on 2 key areas, no new arguments, then weighing. This is the reply speech.</p>
+          <div class="annotated">
+            <div class="annotation"><span class="ann-label">Introduction</span><span class="ann-text">This debate comes down to two key areas: whether a ban actually solves the problem, and whether the costs are justified. The Negative wins both.</span></div>
+            <div class="annotation"><span class="ann-label">Area 1: Whether a ban solves the problem</span><span class="ann-text"></span></div>
+            <div class="annotation"><span class="ann-label">Their Claim</span><span class="ann-text">The Affirmative argues a ban reduces plastic pollution at scale.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: The EU example proves it works</span><span class="ann-text">1. The EU saw a 90% reduction in bags, but total plastic production continued to rise — the problem was not solved, it was shifted<br>2. The Affirmative has not engaged with the Negative's evidence about industrial sources of pollution</span></div>
+            <div class="annotation"><span class="ann-label">Area 2: Whether the costs are justified</span><span class="ann-text"></span></div>
+            <div class="annotation"><span class="ann-label">Their Claim</span><span class="ann-text">The Affirmative argues the environmental benefits outweigh the economic disruption.</span></div>
+            <div class="annotation"><span class="ann-label">Mechanism: Industry will adapt quickly</span><span class="ann-text">1. The Affirmative has not addressed the transition costs — real jobs and real price rises happen in the short term<br>2. Low-income consumers pay disproportionately during transitions, which contradicts the Affirmative's own equity argument</span></div>
+            <div class="annotation"><span class="ann-label">Weighing</span><span class="ann-text">The Negative wins on probability — the unintended consequences of a ban are near certain and well-evidenced. We win on magnitude — the costs fall hardest on those least able to absorb them. The Negative has won this debate.</span></div>
+            <div class="annotation"><span class="ann-label">Closing</span><span class="ann-text">For these reasons, I am proud to negate today's motion.</span></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 1 — Put It in Order</div>
+        <p class="lesson-text" style="margin-bottom:16px">These 5 parts of a speech are in the wrong order. Number them 1–5 to show the correct structure.</p>
+        <div id="sort-exercise" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+          <div class="sort-row" data-correct="3">
+            <select class="sort-select"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+            <div class="sort-text"><strong>Point Headline:</strong> Fares Lock Workers Out of Opportunity</div>
+          </div>
+          <div class="sort-row" data-correct="5">
+            <select class="sort-select"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+            <div class="sort-text"><strong>Impact:</strong> 1. Near certain — a large proportion of low-SES workers gain access to better jobs. 2. Right now, today, families are choosing between fares and food.</div>
+          </div>
+          <div class="sort-row" data-correct="1">
+            <select class="sort-select"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+            <div class="sort-text"><strong>Introduction:</strong> In the status quo, low-income workers are priced out of the public transport system. As the Affirmative team, this is what we change.</div>
+          </div>
+          <div class="sort-row" data-correct="4">
+            <select class="sort-select"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+            <div class="sort-text"><strong>Explanation:</strong> 1. Low-SES workers commute furthest and pay the most in fares. 2. Without free transport, they are locked into low-paying jobs close to home. 3. This ties back to our characterisation that public transport is a public good.</div>
+          </div>
+          <div class="sort-row" data-correct="2">
+            <select class="sort-select"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+            <div class="sort-text"><strong>Characterisation:</strong> • Low-SES workers commute furthest and pay the most in fares. • Public transport is a public good, like roads and schools.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:0">
+          <button class="submit-btn" style="flex:1" onclick="checkSort()">Check My Answer</button>
+          <button class="submit-btn" style="flex:1;background:var(--muted)" onclick="refreshSort()">New Questions →</button>
+        </div>
+        <div class="exercise-result" id="sort-result" style="margin-top:12px"></div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 2 — Identify the Label</div>
+        <p class="lesson-text" style="margin-bottom:16px">Read each excerpt and choose what part of the speech structure it is.</p>
+        <div id="label-exercise-container"></div>
+        <button class="submit-btn" style="margin-top:8px" onclick="refreshLabelExercise()">New Questions →</button>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 3 — Write Your Own</div>
+        <p class="lesson-text" style="margin-bottom:16px">Topic: <em>That the voting age should be lowered to 16.</em> Side: <strong>Affirmative</strong>.<br>Write a full argument (Point Headline + Explanation + Impacts) and get AI feedback.</p>
+        <textarea class="write-area" id="struct-write" placeholder="Point Headline: ...&#10;&#10;Explanation:&#10;1. ...&#10;2. ...&#10;3. ...&#10;&#10;Impacts:&#10;1. ...&#10;2. ..."></textarea>
+        <button class="submit-btn" onclick="getStructFeedback()">Get Feedback →</button>
+        <div class="feedback-box" id="struct-feedback"></div>
+      </div>
+    `
+  },
+  rebuttal: {
+    eyebrow: 'Module 2',
+    title: 'Rebuttals',
+    sub: 'A rebuttal directly attacks your opponent\'s argument and shows why it is wrong.',
+    body: `
+      <div class="lesson-section">
+        <div class="lesson-section-label">Rebuttal Structure</div>
+        <div class="structure-step"><div class="step-num">1</div><div class="step-text"><strong>State Their Point</strong> — "My opponent claims [their argument]."</div></div>
+        <div class="structure-step"><div class="step-num">2</div><div class="step-text"><strong>Signpost</strong> — "I have [X] responses to this." Tell the audience how many responses are coming.</div></div>
+        <div class="structure-step"><div class="step-num">3</div><div class="step-text"><strong>Numbered Responses</strong> — 1. First response. 2. Second response. 3. Third response. As many as needed, each directly attacking their argument.</div></div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Annotated Example</div>
+        <p class="lesson-text">Topic: <em>That we should ban single-use plastics.</em> You are <strong>Negative</strong>.</p>
+        <div class="annotated">
+          <div class="annotation"><span class="ann-label">Their Point</span><span class="ann-text">My opponent claims that banning single-use plastics will reduce pollution and protect the environment.</span></div>
+          <div class="annotation"><span class="ann-label">Signpost</span><span class="ann-text">I have three responses to this.</span></div>
+          <div class="annotation"><span class="ann-label">Responses</span><span class="ann-text">1. A ban simply shifts production to alternatives like cotton bags, which require far more water and energy to produce.<br>2. Paper alternatives drive deforestation — trading one environmental harm for another.<br>3. The Affirmative has not accounted for the fact that most recycling infrastructure cannot handle alternative materials either.</span></div>
+        </div>
+      </div>
+      <div class="lesson-section" id="reb-section-1">
+        <div class="lesson-section-label">Exercise 1 — Respond to This Point</div>
+        <p class="lesson-text reb-topic" style="margin-bottom:16px">You are <strong>Affirmative</strong>. Topic: <em>That we should make voting compulsory.</em><br>The Negative just said:</p>
+        <div class="exercise-impact">"Forcing people to vote undermines the fundamental democratic right to choose not to participate. A democracy built on coercion is not a true democracy."</div>
+        <p class="lesson-text" style="margin:12px 0">Write a rebuttal using the Clash → Point Headline → Explanation → Impacts structure.</p>
+        <textarea class="write-area" id="reb-write-1" placeholder="Their point: My opponent claims...&#10;&#10;Signpost: I have X responses to this.&#10;&#10;Responses:&#10;1. ...&#10;2. ...&#10;3. ...&#10;&#10;Impacts:&#10;1. ...&#10;2. ..."></textarea>
+        <div style="display:flex;gap:10px">
+          <button class="submit-btn" style="flex:1" onclick="getRebFeedback(1)">Get Feedback →</button>
+          <button class="submit-btn" style="flex:1;background:var(--muted)" onclick="refreshRebEx(1)">New Question →</button>
+        </div>
+        <div class="feedback-box" id="reb-feedback-1"></div>
+      </div>
+      <div class="lesson-section" id="reb-section-2">
+        <div class="lesson-section-label">Exercise 2 — Respond to This Point</div>
+        <p class="lesson-text reb-topic" style="margin-bottom:16px">You are <strong>Negative</strong>. Topic: <em>That celebrities should use their platform to support social causes.</em><br>The Affirmative just said:</p>
+        <div class="exercise-impact">"Celebrities have a unique reach — a single post from a major star can raise millions for charity and shift public opinion on critical issues overnight. They have a moral duty to use this power for good."</div>
+        <p class="lesson-text" style="margin:12px 0">Write a rebuttal using the full structure.</p>
+        <textarea class="write-area" id="reb-write-2" placeholder="Their point: My opponent claims...&#10;&#10;Signpost: I have X responses to this.&#10;&#10;Responses:&#10;1. ...&#10;2. ...&#10;&#10;Impacts:&#10;1. ..."></textarea>
+        <div style="display:flex;gap:10px">
+          <button class="submit-btn" style="flex:1" onclick="getRebFeedback(2)">Get Feedback →</button>
+          <button class="submit-btn" style="flex:1;background:var(--muted)" onclick="refreshRebEx(2)">New Question →</button>
+        </div>
+        <div class="feedback-box" id="reb-feedback-2"></div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 3 — Spot the Weakness</div>
+        <p class="lesson-text" style="margin-bottom:16px">Read this rebuttal and choose what is missing or wrong.</p>
+        <div id="flaw-exercise-container"></div>
+        <button class="submit-btn" style="margin-top:10px;background:var(--muted)" onclick="refreshFlawEx()">New Question →</button>
+      </div>
+    `
+  },
+  metrics: {
+    eyebrow: 'Module 3',
+    title: 'Weighing Metrics',
+    sub: 'Weighing metrics explain WHY your team\'s impacts matter more than the opposition\'s.',
+    body: `
+      <div class="lesson-section">
+        <div class="lesson-section-label">The Three Metrics</div>
+        <div class="metric-box"><div class="metric-name">Magnitude</div><div class="metric-desc">How big is the impact? How many people are affected? Use language like "a great number", "the scale is enormous", "affects the most vulnerable".</div></div>
+        <div class="metric-box"><div class="metric-name">Probability</div><div class="metric-desc">How likely is this impact? Use language like "near certain", "inevitable", "the evidence strongly suggests".</div></div>
+        <div class="metric-box"><div class="metric-name">Proximity</div><div class="metric-desc">How soon does this happen? Use language like "right now, today", "immediately", "this is already occurring".</div></div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 1 — Pick the Winning Metric</div>
+        <div class="exercise-box" id="metric-ex-container-1" data-correct="Magnitude" data-exp="Magnitude wins here — your impact affects millions for generations.">
+          <p class="lesson-text metric-opp" style="margin-bottom:8px"><strong>Opponent:</strong> "A ban on single-use plastics will hurt small businesses right now — they cannot afford to switch alternatives immediately."</p>
+          <p class="lesson-text metric-you" style="margin-bottom:16px"><strong>You:</strong> "The long-term environmental damage from continued plastic use will affect millions of Australians for generations."</p>
+          <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Which metric best weighs YOUR impact against theirs?</p>
+          <div class="metric-btns">
+            <button class="metric-opt" onclick="checkEx(1,'Magnitude',this)">Magnitude</button>
+            <button class="metric-opt" onclick="checkEx(1,'Probability',this)">Probability</button>
+            <button class="metric-opt" onclick="checkEx(1,'Proximity',this)">Proximity</button>
+          </div>
+          <div class="exercise-result" id="ex-result-1"></div>
+          <button class="submit-btn" style="margin-top:10px;background:var(--muted)" onclick="refreshMetricEx(1)">New Question →</button>
+        </div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 2 — Pick the Winning Metric</div>
+        <div class="exercise-box" id="metric-ex-container-2" data-correct="Proximity" data-exp="Proximity wins here — your impact is happening right now, today.">
+          <p class="lesson-text metric-opp" style="margin-bottom:8px"><strong>Opponent:</strong> "A great number of developing nations rely on plastic exports for economic survival."</p>
+          <p class="lesson-text metric-you" style="margin-bottom:16px"><strong>You:</strong> "The coastal communities facing plastic pollution are already experiencing health impacts today — this is not a future problem."</p>
+          <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Which metric best weighs YOUR impact?</p>
+          <div class="metric-btns">
+            <button class="metric-opt" onclick="checkEx(2,'Magnitude',this)">Magnitude</button>
+            <button class="metric-opt" onclick="checkEx(2,'Probability',this)">Probability</button>
+            <button class="metric-opt" onclick="checkEx(2,'Proximity',this)">Proximity</button>
+          </div>
+          <div class="exercise-result" id="ex-result-2"></div>
+          <button class="submit-btn" style="margin-top:10px;background:var(--muted)" onclick="refreshMetricEx(2)">New Question →</button>
+        </div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 3 — Pick the Winning Metric</div>
+        <div class="exercise-box">
+          <p class="lesson-text" style="margin-bottom:8px"><strong>Opponent:</strong> "Banning petrol cars by 2035 will cause widespread job losses in the automotive industry, affecting millions of workers."</p>
+          <p class="lesson-text" style="margin-bottom:16px"><strong>You:</strong> "Climate change is already displacing populations and destroying ecosystems. Every year of inaction makes the damage worse and harder to reverse."</p>
+          <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Which metric best weighs YOUR impact?</p>
+          <div class="metric-btns">
+            <button class="metric-opt" onclick="checkEx(3,'Magnitude',this)">Magnitude</button>
+            <button class="metric-opt" onclick="checkEx(3,'Probability',this)">Probability</button>
+            <button class="metric-opt" onclick="checkEx(3,'Proximity',this)">Proximity</button>
+          </div>
+          <div class="exercise-result" id="ex-result-3"></div>
+          <button class="submit-btn" style="margin-top:10px;background:var(--muted)" onclick="refreshMetricEx(3)">New Question →</button>
+        </div>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 4 — Spot the Metric</div>
+        <p class="lesson-text" style="margin-bottom:16px">Read each impact line and identify which metric is being used.</p>
+        <div class="exercise-box" style="margin-bottom:12px">
+          <div class="exercise-impact" style="font-style:italic">"This is happening right now — children in rural areas are already missing school because their families cannot afford bus fares."</div>
+          <div class="metric-btns" style="margin-top:10px">
+            <button class="metric-opt" onclick="checkSpot(1,'Magnitude',this)">Magnitude</button>
+            <button class="metric-opt" onclick="checkSpot(1,'Probability',this)">Probability</button>
+            <button class="metric-opt" onclick="checkSpot(1,'Proximity',this)">Proximity</button>
+          </div>
+          <div class="exercise-result" id="spot-result-1"></div>
+        </div>
+        <div class="exercise-box" style="margin-bottom:12px">
+          <div class="exercise-impact" style="font-style:italic">"A great number of low-income families — hundreds of thousands across Australia — would benefit directly and immediately from free fares."</div>
+          <div class="metric-btns" style="margin-top:10px">
+            <button class="metric-opt" onclick="checkSpot(2,'Magnitude',this)">Magnitude</button>
+            <button class="metric-opt" onclick="checkSpot(2,'Probability',this)">Probability</button>
+            <button class="metric-opt" onclick="checkSpot(2,'Proximity',this)">Proximity</button>
+          </div>
+          <div class="exercise-result" id="spot-result-2"></div>
+        </div>
+        <div class="exercise-box">
+          <div class="exercise-impact" style="font-style:italic">"It is near certain that without intervention, emissions will continue to rise — the trajectory is clear and every major climate model confirms it."</div>
+          <div class="metric-btns" style="margin-top:10px">
+            <button class="metric-opt" onclick="checkSpot(3,'Magnitude',this)">Magnitude</button>
+            <button class="metric-opt" onclick="checkSpot(3,'Probability',this)">Probability</button>
+            <button class="metric-opt" onclick="checkSpot(3,'Proximity',this)">Proximity</button>
+          </div>
+          <div class="exercise-result" id="spot-result-3"></div>
+        <button class="submit-btn" style="margin-top:10px;background:var(--muted)" onclick="refreshSpotEx()">New Questions →</button>
+      </div>
+      <div class="lesson-section">
+        <div class="lesson-section-label">Exercise 5 — Write a Weighted Impact</div>
+        <p class="lesson-text" style="margin-bottom:16px">Topic: <em>That social media does more harm than good to democracy.</em><br>Write 2-3 numbered impact lines. Weave in at least 2 different metrics naturally — no labels.</p>
+        <textarea class="write-area" id="metric-write" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea>
+        <button class="submit-btn" onclick="getMetricFeedback()">Get Feedback →</button>
+        <div class="feedback-box" id="metric-feedback"></div>
+      </div>
+    `
+  },
+  feedback: {
+    eyebrow: 'Module 4',
+    title: 'Write & Get Feedback',
+    sub: 'Write your own argument, rebuttal or impact and get instant AI feedback on structure and strength.',
+    body: `
+      <div class="lesson-section">
+        <div class="lesson-section-label">Choose What to Write</div>
+        <div class="write-type-btns">
+          <button class="write-type-btn" onclick="setWriteType('argument',this)">📋 Full Argument</button>
+          <button class="write-type-btn" onclick="setWriteType('rebuttal',this)">⚔️ Rebuttal</button>
+          <button class="write-type-btn" onclick="setWriteType('impact',this)">💥 Impact Statement</button>
+        </div>
+        <div id="write-form" style="display:none">
+          <p style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Topic (optional)</p>
+          <input type="text" id="write-topic-input" placeholder="e.g. That we should ban single-use plastics" style="width:100%;padding:11px 14px;border:1.5px solid var(--rule);border-radius:8px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px;">
+          <p style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;" id="write-label">Your writing</p>
+          <textarea class="write-area" id="write-textarea" placeholder="Start writing here..."></textarea>
+          <button class="submit-btn" onclick="getFeedback()">Get Feedback →</button>
+          <div class="feedback-box" id="feedback-result"></div>
+        </div>
+      </div>
+    `
+  }
+};
+
+let writeType = '';
+function openLesson(key) {
+  const lesson = LESSON_DATA[key];
+  if (!lesson) return;
+  document.getElementById('lesson-eyebrow').textContent = lesson.eyebrow;
+  document.getElementById('lesson-title').textContent = lesson.title;
+  document.getElementById('lesson-sub').textContent = lesson.sub;
+  document.getElementById('lesson-body').innerHTML = lesson.body;
+  showScreen('lesson');
+  if (key === 'structure') { setTimeout(buildLabelExercise, 50); }
+  if (key === 'rebuttal') { setTimeout(buildFlawExercise, 50); }
+  if (key === 'metrics') { setTimeout(buildSpotExercise, 50); }
+}
+
+function checkEx(num, metric, btn) {
+  const correct = num === 1 ? 'Magnitude' : 'Proximity';
+  const result = document.getElementById('ex-result-' + num);
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b) { b.disabled = true; });
+  if (metric === correct) {
+    btn.classList.add('correct');
+    result.className = 'exercise-result correct show';
+    result.textContent = num === 1 ? '✓ Correct! Magnitude wins here — your impact affects "millions of Australians for generations", a far greater scale than their short-term business concern.' : '✓ Correct! Proximity wins here — your impact is happening right now, today, while their concern about developing nations is more abstract and future-focused.';
+  } else {
+    btn.classList.add('wrong');
+    result.className = 'exercise-result wrong show';
+    result.textContent = '✗ Not quite. Think about what makes your impact stronger — is it bigger in scale, more certain, or more immediate?';
+  }
+}
+
+function setWriteType(type, btn) {
+  writeType = type;
+  document.querySelectorAll('.write-type-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('write-form').style.display = 'block';
+  const labels = { argument: 'Write your argument (Point Headline → Explanation → Impacts)', rebuttal: 'Write your rebuttal (Clash → Point Headline → Explanation → Impacts)', impact: 'Write your numbered impact statements' };
+  document.getElementById('write-label').textContent = labels[type];
+  document.getElementById('feedback-result').className = 'feedback-box';
+}
+
+async function getFeedback() {
+  const text = document.getElementById('write-textarea').value.trim();
+  const topic = document.getElementById('write-topic-input').value.trim();
+  const box = document.getElementById('feedback-result');
+  if (!text) return;
+  box.textContent = 'Analysing your writing...';
+  box.className = 'feedback-box show';
+  const prompts = {
+    argument: 'You are an ISDA debate coach for Year 7/8 students. Give feedback on this argument' + (topic ? ' on "' + topic + '"' : '') + ': ' + text + '. In 3-4 sentences cover: (1) what they did well, (2) whether the structure is correct (Point Headline → numbered Explanation → numbered Impacts), (3) one specific improvement. Be encouraging.',
+    rebuttal: 'You are an ISDA debate coach for Year 7/8 students. Give feedback on this rebuttal' + (topic ? ' on "' + topic + '"' : '') + ': ' + text + '. In 3-4 sentences cover: (1) how well they identify the opponent claim and mechanisms, (2) whether structure is correct (Identify Claim → Mechanism: name → numbered Responses per mechanism, numbering resets each mechanism — no impacts section), (3) one improvement. Be encouraging.',
+    impact: 'You are an ISDA debate coach for Year 7/8 students. Give feedback on these impact statements' + (topic ? ' on "' + topic + '"' : '') + ': ' + text + '. In 2-3 sentences cover: (1) how punchy and effective the impacts are, (2) whether weighing metrics are woven in naturally, (3) one improvement tip.'
+  };
+  const response = await callGemini(prompts[writeType] || prompts.argument, [{ role: 'user', content: 'Give feedback now.' }]);
+  box.textContent = response;
+}
+
+// ─── DEBATE ENGINE ───
+function beginDebate() {
+  conversationHistory = [];
+  turnCount = 0;
+  document.getElementById('chat-area').innerHTML = '';
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('debate-topic-text').textContent = debateTopic;
+  const badge = document.getElementById('debate-side-badge');
+  badge.textContent = 'You: ' + (selectedSide === 'affirmative' ? 'Affirmative' : 'Negative');
+  badge.className = 'side-badge ' + selectedSide;
+  // Show title if logged in
+  const titleBarEl = document.getElementById('debate-title-bar');
+  if (titleBarEl) {
+    if (currentUser) {
+      const pts = parseInt(localStorage.getItem('db_cached_points') || '0');
+      const t = getTitle(pts); const tName = typeof t === 'object' ? t.title : t;
+      titleBarEl.textContent = currentUser.displayName.split(' ')[0] + ' · ' + tName;
+      titleBarEl.style.display = 'inline-block';
+    } else {
+      titleBarEl.style.display = 'none';
+    }
+  }
+
+  showScreen('debate');
+  if (selectedSide === 'negative') {
+    addSystemMsg('Debate started. You are 1st Negative. The AI will open as 1st Affirmative.');
+    showTyping();
+    const prompt = build1stAffPrompt();
+    callGemini(prompt, [{ role:'user', content:'Begin your opening speech now.' }]).then(function(r) {
+      hideTyping();
+      conversationHistory.push({ role:'user', content:'Begin.' });
+      conversationHistory.push({ role:'assistant', content:r });
+      addMsg('ai', r, 'AI (1st Affirmative)');
+    });
+  } else {
+    addSystemMsg('Debate started. You are 1st Affirmative — you go first!');
+  }
+}
+
+function build1stAffPrompt() {
+  return 'You are the 1st Affirmative speaker in an ISDA debate for Year 7/8 students in Sydney. Topic: "' + debateTopic + '".\n\nOutput your speech using EXACTLY these labels:\n\n[INTRODUCTION]\n1-2 sentences. State the status quo injustice on this topic. End: "As the Affirmative team, this is what we change."\n\n[CHARACTERISATION]\n2 dot points: key facts underpinning the Affirmative case for this topic.\n\nArgument 1: [3-5 word headline]\n\n[POINT HEADLINE]\nWrite headline.\n\n[EXPLANATION]\n1. [reason]\n2. [reason]\n3. [reason]\n(add more if needed)\n\n[IMPACT]\n1. [punchy line with metric woven in]\n2. [punchy line]\n(add more if needed)\n\nArgument 2: [3-5 word headline]\n\n[POINT HEADLINE]\nWrite headline.\n\n[EXPLANATION]\n1. [reason]\n2. [reason]\n3. [reason]\n\n[IMPACT]\n1. [punchy line]\n2. [punchy line]\n\nEnd with: For these reasons, I am proud to affirm todays motion.\n\nOnly 2 arguments. All content specific to this topic. No feedback or scores. No greeting. Start immediately with [INTRODUCTION]. Stay in character.';
+}
+
+function build1stNegPrompt(affContent) {
+  const hasContent = affContent && affContent.trim().length > 20;
+  const rebSection = hasContent ? '[IDENTIFY CLAIM]\nState the Affirmative argument you are attacking.\n\nFor each of their mechanisms:\n[MECHANISM: name it]\n[RESPONSES]\nAs many numbered responses as needed. Numbering resets per mechanism.\n1. [response]\n2. [response]\n\nRepeat for a second Affirmative point if needed. No impacts.\n\n' : '[GENERAL COMMENTS]\n2-3 sentences on the flawed world the Affirmative proposes.\n\n';
+  return 'You are the 1st Negative speaker in an ISDA debate for Year 7/8. Topic: "' + debateTopic + '".\n\nOutput using EXACTLY these labels:\n\n[INTRODUCTION]\nExactly 2 sentences. Identify the biggest flaw in the Affirmative world for this topic.\n\n[CHARACTERISATION]\n2 dot points: key facts for the Negative case.\n\n' + rebSection + 'Argument 1: [3-5 word headline]\n\n[POINT HEADLINE]\nHeadline.\n\n[EXPLANATION]\n1. [reason]\n2. [reason]\n3. [reason]\n(add more if needed)\n\n[IMPACT]\n1. [punchy line with metric woven in]\n2. [punchy line]\n\nArgument 2: [3-5 word headline]\n\n[POINT HEADLINE]\nHeadline.\n\n[EXPLANATION]\n1. [reason]\n2. [reason]\n3. [reason]\n\n[IMPACT]\n1. [punchy line]\n2. [punchy line]\n\nArgument 3: [3-5 word headline]\n\n[POINT HEADLINE]\nHeadline.\n\n[EXPLANATION]\n1. [reason]\n2. [reason]\n3. [reason]\n\n[IMPACT]\n1. [punchy line]\n2. [punchy line]\n\nEnd with: For these reasons, I am proud to negate todays motion.\n\nAll content specific to this topic. No feedback or scores. No greeting. Start immediately with [INTRODUCTION]. Stay in character.';
+}
+
+function build2ndAffPrompt(transcript, negHasMaterial) {
+  if (!negHasMaterial) {
+    return 'You are 2nd Affirmative in an ISDA debate. Topic: "' + debateTopic + '". 1st Negative gave little material.\n\nOutput using EXACTLY these labels:\n\n[INTRODUCTION]\n1-2 sentences. Signpost what you are doing.\n\n[GENERAL COMMENTS]\n2-3 sentences reinforcing the Affirmative world.\n\nArgument 3: [3-5 word headline]\n\n[POINT HEADLINE]\nHeadline.\n\n[EXPLANATION]\n1. [reason]\n2. [reason]\n3. [reason]\n\n[IMPACT]\n1. [punchy line]\n2. [punchy line]\n\n[WEIGHING]\n2-3 sentences. Explain why Affirmative wins. Weave in magnitude/probability/proximity naturally.\n\nEnd with: For these reasons, I am proud to affirm todays motion.\n\nNo feedback. No greeting like good evening or ladies and gentlemen. Start immediately with the speech. Stay in character.';
+  }
+  return 'You are 2nd Affirmative in an ISDA debate. Topic: "' + debateTopic + '". 1st Negative gave solid material.\n\nTranscript:\n' + transcript + '\n\nOutput using EXACTLY these labels:\n\n[INTRODUCTION]\n1-2 sentences. Signpost what you are doing.\n\nFor EACH 1st Negative point:\n[THEIR POINT: name it]\nClash it — 2-3 sentences.\n[YOUR POINT: name the corresponding 1st Aff point]\nDefend it — 2-3 sentences.\n\nRepeat for each 1st Neg point. Then:\n\nArgument 3: [3-5 word headline]\n\n[POINT HEADLINE]\nHeadline.\n\n[EXPLANATION]\n1. [reason]\n2. [reason]\n3. [reason]\n\n[IMPACT]\n1. [punchy line]\n2. [punchy line]\n\n[WEIGHING]\n2-3 sentences. Explain why Affirmative wins.\n\nEnd with: For these reasons, I am proud to affirm todays motion.\n\nNo feedback. No greeting like good evening or ladies and gentlemen. Start immediately with the speech. Stay in character.';
+}
+
+function buildClashPrompt(side, speakerLabel, transcript) {
+  const endWord = side === 'Affirmative' ? 'affirm' : 'negate';
+  return 'You are the ' + speakerLabel + ' in an ISDA debate. Topic: "' + debateTopic + '".\n\nTranscript:\n' + transcript + '\n\nOutput using EXACTLY these labels:\n\n[INTRODUCTION]\n1-2 sentences. Signpost the 2 areas of contention you will clash on.\n\n[CLASH: name of first area]\nFor each opposition argument in this clash:\n[THEIR ARGUMENT: name it]\nRespond — 2-3 sentences.\n\n[CLASH: name of second area]\nFor each opposition argument in this clash:\n[THEIR ARGUMENT: name it]\nRespond — 2-3 sentences.\n\n[WEIGHING]\n3-4 sentences. Explain why your team has won each clash and the debate overall. Weave in metrics naturally.\n\nEnd with: For these reasons, I am proud to ' + endWord + ' todays motion.\n\nNo new arguments. No feedback. No greeting like good evening or ladies and gentlemen. Start immediately with the speech. Stay in character.';
+}
+
+function buildRebuttalPrompt(side) {
+  return 'You are an ISDA competitive debater, ' + side + ' side. Topic: "' + debateTopic + '".\n\nOutput using EXACTLY these labels:\n\n[IDENTIFY CLAIM]\nOne sentence: My opponent claims... State their main argument.\n\nFor each of their mechanisms:\n\n[MECHANISM: name the specific mechanism]\n[RESPONSES]\nAs many numbered responses as needed. Numbering resets for each new mechanism.\n1. [response]\n2. [response]\n(add more if needed)\n\nRepeat for every mechanism. No impacts section at the end.\n\nNo feedback. No greeting. Start immediately. Stay in character.';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; autoResize(input);
+  turnCount++;
+  const aiSide = selectedSide === 'affirmative' ? 'Negative' : 'Affirmative';
+  const userLabel = selectedSide === 'affirmative' ? 'Affirmative' : 'Negative';
+  addMsg('user', text, 'You (' + getSpeaker(turnCount, userLabel) + ')');
+  conversationHistory.push({ role:'user', content:text });
+  const transcript = conversationHistory.slice(-8).map(function(m){ return (m.role==='user'?'Student':'AI')+': '+m.content.slice(0,200); }).join('\n');
+  let prompt;
+  if (selectedSide === 'affirmative') {
+    if (turnCount===1) prompt = build1stNegPrompt(text);
+    else if (turnCount===2) prompt = buildClashPrompt('Negative','2nd Negative speaker',transcript);
+    else if (turnCount===3) prompt = buildClashPrompt('Negative','3rd Negative speaker',transcript);
+    else prompt = buildRebuttalPrompt('Negative');
+  } else {
+    if (turnCount===1) prompt = build2ndAffPrompt(transcript, text.trim().length>30);
+    else if (turnCount===2) prompt = buildClashPrompt('Affirmative','3rd Affirmative speaker',transcript);
+    else prompt = buildRebuttalPrompt('Affirmative');
+  }
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+  const response = await callGemini(prompt, conversationHistory);
+  hideTyping();
+  document.getElementById('send-btn').disabled = false;
+  conversationHistory.push({ role:'assistant', content:response });
+  addMsg('ai', response, 'AI (' + getSpeaker(turnCount, aiSide) + ')');
+  if (selectedSide==='affirmative') {
+    if (turnCount===1) addSystemMsg('--- 2nd Speakers --- You are now 2nd Affirmative. Clash 1st Neg points, defend yours, add your 3rd argument.');
+    else if (turnCount===2) addSystemMsg('--- 3rd Speakers --- You are now 3rd Affirmative. Summary and reply only — no new arguments.');
+    else if (turnCount>=3) { addSystemMsg('--- Debate Complete --- Click End & Score.'); document.getElementById('send-btn').disabled=true; }
+  } else {
+    if (turnCount===1) addSystemMsg('--- 2nd Speakers --- You are now 2nd Negative. Clash key areas, respond systematically, then weigh. No new arguments.');
+    else if (turnCount===2) addSystemMsg('--- 3rd Speakers --- You are now 3rd Negative. Summary and reply only — no new arguments.');
+    else if (turnCount>=3) { addSystemMsg('--- Debate Complete --- Click End & Score.'); document.getElementById('send-btn').disabled=true; }
+  }
+}
+
+function getSpeaker(turn, side) {
+  return (turn<=1?'1st':turn<=2?'2nd':'3rd') + ' ' + side;
+}
+
+async function endDebate() {
+  if (conversationHistory.length < 1) { alert('Make at least one argument first!'); return; }
+  document.getElementById('screen-debate').classList.remove('active');
+  document.getElementById('screen-score').classList.add('active');
+  document.getElementById('score-card').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-style:italic;">Analysing your performance…<br><br><div style="display:flex;gap:6px;justify-content:center;margin-top:8px"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  const userSide = selectedSide === 'affirmative' ? 'Affirmative' : 'Negative';
+  const shortTranscript = conversationHistory.slice(-6).map(function(m){ return (m.role==='user'?'Student':'AI')+': '+m.content.slice(0,200); }).join('\n');
+  const scorePrompt = 'You are a strict ISDA adjudicator scoring a Year 7/8 student debater. Topic: "' + debateTopic + '". Student side: ' + userSide + '.\n\nTranscript of student speeches only:\n' + shortTranscript + '\n\nScore the student on THREE dimensions. Each score must be between 1-10. NEVER give 0.\n\nArguments (1-10): How well did the student structure their arguments? Did they use Point Headline, Explanation with numbered reasons, and numbered Impacts?\nRebuttals (1-10): How well did the student identify opponent claims and mechanisms, and respond systematically?\nOverall (1-10): Overall performance combining both dimensions.\n\nScoring guide: gibberish or no attempt=1, very weak=2-3, weak but some effort=4, some structure=5-6, good structure=7-8, excellent=9-10.\n\nAll three scores MUST be between 1-10. Never return 0 for any field.\ns1/s2/s3 = three strengths as full sentences. i1/i2/i3 = three improvements as full sentences.\n\nReply ONLY with valid JSON, no backticks:\n{"arg_score":7,"reb_score":6,"overall":7,"summary":"one sentence","best_moment":"quote or moment","s1":"strength","s2":"strength","s3":"strength","i1":"improvement","i2":"improvement","i3":"improvement"}';
+  const raw = await callGemini(scorePrompt, [{ role:'user', content:'JSON only:' }]);
+  try {
+    let clean = raw.replace(/`/g,'').trim();
+    const d = JSON.parse(clean.substring(clean.indexOf('{'), clean.lastIndexOf('}')+1));
+    if (currentUser && d.overall) saveDebateScore(d.overall, d.arg_score, d.reb_score);
+    document.getElementById('score-card').innerHTML =
+      '<p class="score-eyebrow">Debate Complete · ' + userSide + '</p>' +
+      '<h2 class="score-title">Your Scorecard</h2>' +
+      '<div class="score-grid">' +
+        '<div class="score-box"><div class="score-num">' + d.arg_score + '<span style="font-size:20px">/10</span></div><div class="score-lbl">Arguments</div></div>' +
+        '<div class="score-box"><div class="score-num">' + d.reb_score + '<span style="font-size:20px">/10</span></div><div class="score-lbl">Rebuttals</div></div>' +
+        '<div class="score-box"><div class="score-num overall">' + d.overall + '<span style="font-size:20px">/10</span></div><div class="score-lbl">Overall</div></div>' +
+      '</div>' +
+      '<div class="score-section"><div class="score-section-lbl">Summary</div><p class="score-text">' + d.summary + '</p></div>' +
+      '<div class="score-section"><div class="score-section-lbl">Best Moment</div><p class="score-text" style="font-family:Fraunces,serif;font-style:italic">"' + d.best_moment + '"</p></div>' +
+      '<div class="score-section"><div class="score-section-lbl">Strengths</div><ul class="score-list"><li>' + d.s1 + '</li><li>' + d.s2 + '</li><li>' + d.s3 + '</li></ul></div>' +
+      '<div class="score-section"><div class="score-section-lbl">Areas to Improve</div><ul class="score-list"><li>' + d.i1 + '</li><li>' + d.i2 + '</li><li>' + d.i3 + '</li></ul></div>' +
+      '<div style="text-align:center;margin:20px 0 4px">' +
+      '<p class="points-formula" style="margin-bottom:6px">Arguments ' + d.arg_score + ' · Rebuttals ' + d.reb_score + ' · Overall ' + d.overall + '</p>' +
+      '<div class="points-earned points-pop">+' + calcPoints(d.arg_score, d.reb_score, d.overall) + ' Points</div>' +
+      '</div>' +
+      '<button class="restart-btn" onclick="restartDebate()">Debate Again →</button>';
+  } catch(e) {
+    document.getElementById('score-card').innerHTML = '<p class="score-eyebrow">Debate Complete</p><h2 class="score-title">Great effort!</h2><p class="score-text">' + raw + '</p><button class="restart-btn" onclick="restartDebate()">Debate Again →</button>';
+  }
+}
+
+function restartDebate() {
+  conversationHistory = []; turnCount = 0;
+  document.getElementById('nav-topicinfo').style.display = 'none';
+  showScreen('home');
+}
+
+// ─── UI HELPERS ───
+function formatMsg(text) {
+  return text.replace(/\n/g,'<br>')
+    .replace(/\[INTRODUCTION\]/g,'<span class="section-lbl">Introduction</span>')
+    .replace(/\[CHARACTERISATION\]/g,'<span class="section-lbl">Characterisation</span>')
+    .replace(/\[POINT HEADLINE\]/g,'<span class="section-lbl">Point</span>')
+    .replace(/\[EXPLANATION\]/g,'<span class="section-lbl">Explanation</span>')
+    .replace(/\[IMPACT\]/g,'<span class="section-lbl">Impact</span>')
+    .replace(/\[CLASH\]/g,'<span class="section-lbl">Clash</span>')
+    .replace(/\[IDENTIFY CLAIM\]/g,'<span class="section-lbl">Their Claim</span>')
+    .replace(/\[RESPONSES\]/g,'<span class="section-lbl">Responses</span>')
+    .replace(/\[MECHANISM: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#6a4c8a">Mechanism: $1</span>')
+    .replace(/\[THEIR CLAIM: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#b83535">Their Claim: $1</span>')
+    .replace(/\[AREA 1: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#111016">Area 1: $1</span>')
+    .replace(/\[AREA 2: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#111016">Area 2: $1</span>')
+    .replace(/\[REBUTTAL\]/g,'<span class="section-lbl">Rebuttal</span>')
+    .replace(/\[THEIR POINT\]/g,'<span class="section-lbl">Their Point</span>')
+    .replace(/\[SIGNPOST\]/g,'<span class="section-lbl">Signpost</span>')
+    .replace(/\[RESPONSES\]/g,'<span class="section-lbl">Responses</span>')
+    .replace(/\[GENERAL COMMENTS\]/g,'<span class="section-lbl">General Comments</span>')
+    .replace(/\[WEIGHING\]/g,'<span class="section-lbl">Weighing</span>')
+    .replace(/\[THEIR POINT: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#b83535">Their Point: $1</span>')
+    .replace(/\[YOUR POINT: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#1a5c3a">Your Point: $1</span>')
+    .replace(/\[CLASH: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#111016;font-size:12px">Clash: $1</span>')
+    .replace(/\[THEIR ARGUMENT: ([^\]]+)\]/g,'<span class="section-lbl" style="color:#b83535">Their Argument: $1</span>')
+    .replace(/(?:^|<br>)(\d+\. )/g,'<br><strong>$1</strong>')
+    .replace(/\. ([A-Z])/g,'.<br>$1');
+}
+
+function addMsg(role, text, label) {
+  const chat = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  if (role === 'system') {
+    div.innerHTML = '<div class="msg-bubble">' + text + '</div>';
+  } else {
+    const avatar = role === 'ai' ? '🤖' : (selectedAvatar || '');
+    const customImg = role !== 'ai' ? localStorage.getItem('db_avatar_img') : null;
+    const avatarStyle = customImg ? 'style="background-image:url(' + customImg + ');background-size:cover;background-position:center;"' : '';
+    div.innerHTML = '<div class="msg-avatar" ' + avatarStyle + '>' + (customImg ? '' : avatar) + '</div><div class="msg-content"><span class="msg-label">' + label + '</span><div class="msg-bubble">' + formatMsg(text) + '</div></div>';
+  }
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addSystemMsg(text) {
+  const chat = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg system';
+  div.innerHTML = '<div class="msg-content" style="max-width:100%;width:100%"><div class="msg-bubble">' + text + '</div></div>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+let typingEl = null;
+function showTyping() {
+  const chat = document.getElementById('chat-area');
+  typingEl = document.createElement('div');
+  typingEl.className = 'msg ai'; typingEl.id = 'typing-el';
+  typingEl.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-content"><span class="msg-label">AI is thinking…</span><div class="typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  chat.appendChild(typingEl); chat.scrollTop = chat.scrollHeight;
+}
+function hideTyping() { const el = document.getElementById('typing-el'); if (el) el.remove(); }
+function handleKey(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,130)+'px'; }
+
+// ─── GEMINI API ───
+async function callGemini(systemPrompt, messages) {
+  try {
+    const filtered = [];
+    for (const m of messages) {
+      const role = m.role==='assistant'?'model':'user';
+      if (filtered.length>0 && filtered[filtered.length-1].role===role) {
+        filtered[filtered.length-1].parts[0].text += '\n' + m.content;
+      } else {
+        filtered.push({ role, parts:[{ text: m.content }] });
+      }
+    }
+    if (!filtered.length || filtered[0].role!=='user') filtered.unshift({role:'user',parts:[{text:'Begin.'}]});
+    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+    for (const model of models) {
+      try {
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + GEMINI_KEY, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ system_instruction:{parts:[{text:systemPrompt}]}, contents:filtered, generationConfig:{maxOutputTokens:3500,temperature:0.6} })
+        });
+        const data = await res.json();
+        if (data.error && (data.error.code === 503 || data.error.code === 404 || data.error.status === 'UNAVAILABLE' || data.error.status === 'NOT_FOUND' || data.error.message.includes('high demand') || data.error.message.includes('overloaded') || data.error.message.includes('no longer available'))) {
+          continue; // try next model
+        }
+        if (data.error) return 'Error: ' + data.error.message;
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, no response.';
+      } catch(e) { continue; }
+    }
+    return 'All models are busy right now. Please try again in a moment.';
+  } catch(e) { return 'Network error. Please try again.'; }
+}
+
+// ─── EXERCISE FUNCTIONS ───
+
+// Module 1 Ex1 — Sort exercise
+function checkSort() {
+  const rows = document.querySelectorAll('.sort-row');
+  let allCorrect = true;
+  let allFilled = true;
+  rows.forEach(function(row) {
+    const sel = row.querySelector('.sort-select');
+    const correct = row.getAttribute('data-correct');
+    if (!sel.value) { allFilled = false; return; }
+    if (sel.value === correct) {
+      row.classList.add('correct'); row.classList.remove('wrong');
+    } else {
+      row.classList.add('wrong'); row.classList.remove('correct');
+      allCorrect = false;
+    }
+  });
+  const res = document.getElementById('sort-result');
+  if (!allFilled) {
+    res.className='exercise-result wrong show';
+    res.textContent='Please select a number for every row before checking.';
+    return;
+  }
+  if (allCorrect) {
+    res.className='exercise-result correct show';
+    res.textContent='Correct! The order is: Introduction (1) → Characterisation (2) → Point Headline (3) → Explanation (4) → Impact (5).';
+  } else {
+    res.className='exercise-result wrong show';
+    res.textContent='Not quite — the rows highlighted in red are in the wrong position. Remember: Introduction → Characterisation → Point Headline → Explanation → Impact.';
+  }
+}
+const LABEL_POOL = [
+  { text: 'In the status quo, the financially disadvantaged have been left behind by a government that has failed to act on transport costs. As the Affirmative team, this is what we change.', label: 'Introduction', hint: 'This sets up the status quo injustice and ends with the team purpose — that is the Introduction.' },
+  { text: 'Low-income families spend a disproportionate share of income on fares, leaving less for food, school and rent.', label: 'Explanation', hint: 'This gives a specific numbered reason explaining the argument — that is an Explanation point.' },
+  { text: 'A great number of low-SES families get meaningful relief, week after week — the scale of this benefit cannot be overstated.', label: 'Impact', hint: 'This states a consequence and uses Magnitude to weigh it — that is an Impact.' },
+  { text: '• Low-SES workers commute furthest and pay the most in fares\n• Public transport is a public good, like roads and schools', label: 'Characterisation', hint: 'These are 2 dot-point facts that underpin the case without making an argument yet — that is Characterisation.' },
+  { text: 'Young people pay taxes, work, and are directly affected by government decisions — yet they have no say in who makes those decisions.', label: 'Explanation', hint: 'This gives a reason backing up the argument — that is an Explanation point.' },
+  { text: 'Near certain — a large proportion of 16 and 17-year-olds would vote, strengthening democratic representation at scale.', label: 'Impact', hint: 'This states a consequence and weaves in Probability and Magnitude — that is an Impact.' },
+  { text: 'In the status quo, 16-year-olds are trusted to drive, work and pay taxes — yet their voices are excluded from democracy. As the Affirmative team, this is what we change.', label: 'Introduction', hint: 'This sets up the injustice in the status quo and ends with the team purpose — that is the Introduction.' },
+  { text: '• 16-year-olds can work, drive and pay taxes\n• Voter turnout among 18-24 year olds is consistently the lowest of any age group', label: 'Characterisation', hint: 'These are 2 dot-point facts underpinning the case with no argument yet — that is Characterisation.' },
+  { text: 'This ties back to our characterisation that low-SES workers commute furthest — without free fares, they are locked into low-paying jobs close to home.', label: 'Explanation', hint: 'This reason explicitly ties back to the characterisation — that is a strong Explanation point.' },
+  { text: 'Right now, today — children in rural areas are already missing school because families cannot afford bus fares.', label: 'Impact', hint: 'This states an immediate consequence and uses Proximity — that is an Impact.' },
+  { text: 'Social media platforms reach billions of users daily, yet operate with no obligation to accuracy or public interest.', label: 'Characterisation', hint: 'This is a factual dot point establishing the landscape of the debate — that is Characterisation.' },
+  { text: 'In the status quo, misinformation spreads faster than truth on every major platform — and democratic institutions are paying the price. As the Negative team, this is what we must address.', label: 'Introduction', hint: 'This sets up the status quo problem and signals the team purpose — that is the Introduction.' },
+  { text: 'Algorithm-driven feeds reward outrage over accuracy, meaning false stories consistently outperform true ones in reach and engagement.', label: 'Explanation', hint: 'This gives a specific mechanism explaining the argument — that is an Explanation point.' },
+  { text: 'The probability is high — studies show misinformation spreads six times faster than accurate news, affecting a great number of voters.', label: 'Impact', hint: 'This states a consequence and weaves in Probability and Magnitude — that is an Impact.' }
+];
+
+let currentLabelSet = [];
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function buildLabelExercise() {
+  const pool = shuffleArray(LABEL_POOL);
+  currentLabelSet = pool.slice(0, 3);
+  const container = document.getElementById('label-exercise-container');
+  if (!container) return;
+  container.innerHTML = '';
+  currentLabelSet.forEach(function(item, i) {
+    const num = i + 1;
+    const box = document.createElement('div');
+    box.className = 'exercise-box';
+    box.style.marginBottom = '12px';
+    box.innerHTML =
+      '<div class="exercise-impact" style="font-style:italic">' + item.text.replace(/\n/g,'<br>') + '</div>' +
+      '<p style="font-size:12px;font-weight:600;color:var(--muted);margin:8px 0">What part of the speech is this?</p>' +
+      '<div class="metric-btns" id="label-btns-' + num + '">' +
+        '<button class="metric-opt" onclick="checkLabelDynamic(' + num + ',\'Introduction\',this)">Introduction</button>' +
+        '<button class="metric-opt" onclick="checkLabelDynamic(' + num + ',\'Characterisation\',this)">Characterisation</button>' +
+        '<button class="metric-opt" onclick="checkLabelDynamic(' + num + ',\'Explanation\',this)">Explanation</button>' +
+        '<button class="metric-opt" onclick="checkLabelDynamic(' + num + ',\'Impact\',this)">Impact</button>' +
+      '</div>' +
+      '<div class="exercise-result" id="label-result-' + num + '"></div>';
+    container.appendChild(box);
+  });
+}
+
+function checkLabelDynamic(num, answer, btn) {
+  const item = currentLabelSet[num - 1];
+  const res = document.getElementById('label-result-' + num);
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled = true; });
+  if (answer === item.label) {
+    btn.classList.add('correct');
+    res.className = 'exercise-result correct show';
+    res.textContent = 'Correct! ' + item.hint;
+  } else {
+    btn.classList.add('wrong');
+    res.className = 'exercise-result wrong show';
+    res.textContent = 'Not quite. ' + item.hint;
+  }
+}
+
+function refreshLabelExercise() {
+  buildLabelExercise();
+}
+
+// Keep old checkLabel for backwards compat
+function checkLabel(num, answer, btn) { checkLabelDynamic(num, answer, btn); }
+
+async function getStructFeedback() {
+  const text = document.getElementById('struct-write').value.trim();
+  const box = document.getElementById('struct-feedback');
+  if (!text) return;
+  box.textContent = 'Analysing...'; box.className='feedback-box show';
+  const r = await callGemini('You are an ISDA debate coach for Year 7/8 students. The topic is "That the voting age should be lowered to 16" and the student is Affirmative. Give feedback on their argument: ' + text + '. In 3-4 sentences: (1) what they did well, (2) whether structure is correct (Point Headline → numbered Explanation → numbered Impacts), (3) one specific improvement. Encouraging tone.', [{role:'user',content:'Give feedback.'}]);
+  box.textContent=r; box.className='feedback-box show';
+}
+
+// Module 2 exercises
+async function getRebFeedback(num) {
+  const text = document.getElementById('reb-write-' + num).value.trim();
+  const box = document.getElementById('reb-feedback-' + num);
+  if (!text) return;
+  box.textContent='Analysing...'; box.className='feedback-box show';
+  const contexts = {
+    1: 'Topic: "That voting should be compulsory." Student is Affirmative. They are rebutting: "Forcing people to vote undermines the democratic right to choose not to participate."',
+    2: 'Topic: "That celebrities should use their platform to support social causes." Student is Negative. They are rebutting: "Celebrities have unique reach and a moral duty to use this power for good."'
+  };
+  const r = await callGemini('You are an ISDA debate coach for Year 7/8 students. ' + contexts[num] + ' Give feedback on their rebuttal: ' + text + '. In 3-4 sentences: (1) how well they state and attack the opponent point, (2) whether structure is correct (Their Point → Signpost "I have X responses" → numbered Responses → numbered Impacts), (3) one specific improvement. Encouraging.', [{role:'user',content:'Give feedback.'}]);
+  box.textContent=r; box.className='feedback-box show';
+}
+
+function checkRebFlaw(answer, btn) {
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=true; });
+  const res = document.getElementById('reb-flaw-result');
+  if (answer==='B') {
+    btn.classList.add('correct');
+    res.className='exercise-result correct show';
+    res.textContent='Correct! The biggest problem is that there is no structure at all. A good rebuttal needs a Point Headline, numbered Explanation reasons, and numbered Impacts. Without these it is just an assertion.';
+  } else {
+    btn.classList.add('wrong');
+    res.className='exercise-result wrong show';
+    res.textContent='Not quite. The core problem is the lack of structure — no Point Headline, no numbered Explanation, no numbered Impacts.';
+  }
+}
+
+// Module 3 exercises
+const EX_ANSWERS = {
+  1:{correct:'Magnitude',exp:'✓ Correct! Magnitude wins here — your impact affects "millions of Australians for generations", a far greater scale than their short-term business concern.'},
+  2:{correct:'Proximity',exp:'✓ Correct! Proximity wins here — your impact is happening right now, today, while their concern is more abstract and future-focused.'},
+  3:{correct:'Proximity',exp:'✓ Correct! Proximity wins here — you are arguing the damage is already happening and worsening every year, making it more urgent than their workforce concern.'}
+};
+function checkEx(num, metric, btn) {
+  const ans = EX_ANSWERS[num];
+  const res = document.getElementById('ex-result-' + num);
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=true; });
+  if (metric===ans.correct) {
+    btn.classList.add('correct');
+    res.className='exercise-result correct show'; res.textContent=ans.exp;
+  } else {
+    btn.classList.add('wrong');
+    res.className='exercise-result wrong show';
+    res.textContent='✗ Not quite. Think about what makes your impact stronger than theirs — is it bigger in scale, more certain, or more immediate?';
+  }
+}
+
+const SPOT_ANSWERS = {1:'Proximity',2:'Magnitude',3:'Probability'};
+function checkSpot(num, metric, btn) {
+  const res = document.getElementById('spot-result-' + num);
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=true; });
+  const msgs = {
+    1:{c:'Correct! Right now and already are proximity language — the impact is happening immediately.',w:'Not quite. Look for time-based words like right now and already — that points to Proximity.'},
+    2:{c:'Correct! A great number and hundreds of thousands are magnitude language — it is about scale.',w:'Not quite. Look for scale language like a great number — that is Magnitude.'},
+    3:{c:'Correct! Near certain and every major model confirms it are probability language — it is about likelihood.',w:'Not quite. Near certain is about how likely the impact is — that is Probability.'}
+  };
+  if (metric===SPOT_ANSWERS[num]) {
+    btn.classList.add('correct');
+    res.className='exercise-result correct show'; res.textContent=msgs[num].c;
+  } else {
+    btn.classList.add('wrong');
+    res.className='exercise-result wrong show'; res.textContent=msgs[num].w;
+  }
+}
+
+async function getMetricFeedback() {
+  const text = document.getElementById('metric-write').value.trim();
+  const box = document.getElementById('metric-feedback');
+  if (!text) return;
+  box.textContent='Analysing...'; box.className='feedback-box show';
+  const r = await callGemini('You are an ISDA debate coach for Year 7/8 students. Topic: "That social media does more harm than good to democracy." The student wrote these impact lines: ' + text + '. In 2-3 sentences: (1) how punchy and effective the impacts are, (2) whether they wove in at least 2 weighing metrics (magnitude/probability/proximity) naturally without labelling them, (3) one improvement. Be encouraging.', [{role:'user',content:'Give feedback.'}]);
+  box.textContent=r; box.className='feedback-box show';
+}
+
+
+
+// ─── SORT EXERCISE POOL ───
+const SORT_POOL = [
+  [
+    { text: '<strong>Point Headline:</strong> Fares Lock Workers Out of Opportunity', correct: 3 },
+    { text: '<strong>Impact:</strong> 1. Near certain — a large proportion of low-SES workers gain access to better jobs. 2. Right now, today, families are choosing between fares and food.', correct: 5 },
+    { text: '<strong>Introduction:</strong> In the status quo, low-income workers are priced out of the public transport system. As the Affirmative team, this is what we change.', correct: 1 },
+    { text: '<strong>Explanation:</strong> 1. Low-SES workers commute furthest and pay the most in fares. 2. Without free transport, they are locked into low-paying jobs close to home. 3. Ties back to our characterisation that public transport is a public good.', correct: 4 },
+    { text: '<strong>Characterisation:</strong> • Low-SES workers commute furthest and pay the most in fares. • Public transport is a public good, like roads and schools.', correct: 2 }
+  ],
+  [
+    { text: '<strong>Introduction:</strong> In the status quo, 16-year-olds are trusted to drive, work and pay taxes — yet their voices are excluded from democracy. As the Affirmative team, this is what we change.', correct: 1 },
+    { text: '<strong>Impact:</strong> Near certain — millions of young people gain a democratic voice, strengthening the legitimacy of every election held from this point forward.', correct: 5 },
+    { text: '<strong>Characterisation:</strong> • 16-year-olds can work, drive and pay taxes. • Voter turnout among 18-24 year olds is the lowest of any age group.', correct: 2 },
+    { text: '<strong>Explanation:</strong> 1. Young people are directly affected by policies on education, climate and housing. 2. Excluding them means governments have no incentive to act in their interest. 3. Ties back to our characterisation that 16-year-olds already carry adult responsibilities.', correct: 4 },
+    { text: '<strong>Point Headline:</strong> Democracy Demands Inclusion', correct: 3 }
+  ],
+  [
+    { text: '<strong>Characterisation:</strong> • Social media platforms reach billions of users daily. • Algorithms reward outrage over accuracy.', correct: 2 },
+    { text: '<strong>Point Headline:</strong> Misinformation Undermines Democratic Choice', correct: 3 },
+    { text: '<strong>Explanation:</strong> 1. False stories spread six times faster than accurate ones on major platforms. 2. Voters make decisions based on information they believe to be true. 3. Ties back to our characterisation that algorithms are designed to maximise engagement, not truth.', correct: 4 },
+    { text: '<strong>Introduction:</strong> In the status quo, democratic institutions are being eroded by unchecked misinformation. As the Affirmative team, this is what we change.', correct: 1 },
+    { text: '<strong>Impact:</strong> 1. A great number of elections have been demonstrably influenced by coordinated misinformation campaigns. 2. The scale of the harm is already visible — and growing.', correct: 5 }
+  ]
+];
+
+let currentSortSet = 0;
+function refreshSort() {
+  currentSortSet = (currentSortSet + 1) % SORT_POOL.length;
+  buildSortExercise(currentSortSet);
+}
+
+function buildSortExercise(idx) {
+  const set = SORT_POOL[idx];
+  const shuffled = shuffleArray(set);
+  const container = document.getElementById('sort-exercise');
+  if (!container) return;
+  // Rebuild rows
+  const rows = container.querySelectorAll('.sort-row');
+  rows.forEach(function(row, i) {
+    if (!shuffled[i]) return;
+    row.setAttribute('data-correct', shuffled[i].correct);
+    row.querySelector('.sort-text').innerHTML = shuffled[i].text;
+    row.querySelector('.sort-select').value = '';
+    row.classList.remove('correct', 'wrong');
+  });
+  const res = document.getElementById('sort-result');
+  if (res) { res.className = 'exercise-result'; res.textContent = ''; }
+}
+
+// ─── REBUTTAL EXERCISE POOL ───
+const REB_POOL = [
+  {
+    topic: 'That voting should be compulsory.',
+    side: 'Affirmative',
+    point: 'Forcing people to vote undermines the fundamental democratic right to choose not to participate. A democracy built on coercion is not a true democracy.'
+  },
+  {
+    topic: 'That the voting age should be lowered to 16.',
+    side: 'Negative',
+    point: '16-year-olds lack the life experience and political knowledge needed to make an informed vote. Lowering the age risks diluting the quality of democratic decision-making.'
+  },
+  {
+    topic: 'That we should ban single-use plastics.',
+    side: 'Negative',
+    point: 'A ban on single-use plastics will disproportionately harm low-income consumers who rely on affordable plastic packaging for food and household goods.'
+  },
+  {
+    topic: 'That Australia should become a republic.',
+    side: 'Negative',
+    point: 'The current constitutional monarchy has delivered decades of stable democratic governance. There is no evidence that becoming a republic would improve outcomes for Australians.'
+  },
+  {
+    topic: 'That social media does more harm than good to democracy.',
+    side: 'Affirmative',
+    point: 'Social media has given ordinary citizens a voice — enabling grassroots movements, holding governments accountable, and democratising political participation in ways traditional media never could.'
+  },
+  {
+    topic: 'That celebrities should use their platform to support social causes.',
+    side: 'Negative',
+    point: 'Celebrities have a unique reach — a single post from a major star can raise millions for charity and shift public opinion on critical issues overnight. They have a moral duty to use this power for good.'
+  }
+];
+
+let currentRebSet = [0, 1];
+function refreshRebEx(num) {
+  const pool = REB_POOL.slice();
+  let next = (currentRebSet[num-1] + 1 + Math.floor(Math.random()*2)) % pool.length;
+  currentRebSet[num-1] = next;
+  const item = pool[next];
+  const section = document.getElementById('reb-section-' + num);
+  if (!section) return;
+  section.querySelector('.reb-topic').textContent = 'Topic: ' + item.topic + ' You are ' + item.side + '.';
+  section.querySelector('.exercise-impact').textContent = item.point;
+  section.querySelector('textarea').value = '';
+  const fb = document.getElementById('reb-feedback-' + num);
+  if (fb) { fb.className = 'feedback-box'; fb.textContent = ''; }
+}
+
+// ─── FLAW EXERCISE POOL ───
+const FLAW_POOL = [
+  {
+    text: '"My opponent says free public transport helps the poor. But actually rich people use trains too. So it does not really help the poor. The impact is that money gets wasted."',
+    answer: 'B',
+    correct: 'Correct! The biggest problem is the lack of structure — no Point Headline, no Mechanism analysis, no numbered Responses, no numbered Impacts. Structure turns a comment into a proper rebuttal.',
+    wrong: 'Not quite. The core problem is the lack of structure — no Mechanisms identified, no numbered Responses, no Impacts. That is what makes it weak.'
+  },
+  {
+    text: '"The Affirmative says banning plastics is good. I disagree because plastics are useful. Lots of things need plastic. So the ban is bad."',
+    answer: 'B',
+    correct: 'Correct! This rebuttal never identifies a specific mechanism and gives no numbered responses. It is just a vague assertion.',
+    wrong: 'Not quite. The real problem is there are no mechanisms identified and no numbered responses. It reads as an opinion, not a structured rebuttal.'
+  },
+  {
+    text: '"My opponent claims lowering the voting age helps democracy. However I think 16-year-olds are immature. They do not know enough. Therefore this argument fails."',
+    answer: 'B',
+    correct: 'Correct! This rebuttal makes a claim but never identifies the mechanisms and gives no numbered responses.',
+    wrong: 'Not quite. The main problem is structural — no mechanisms identified and no numbered responses. The claim alone does not constitute a rebuttal.'
+  }
+];
+
+let currentFlawIdx = 0;
+function refreshFlawEx() {
+  currentFlawIdx = (currentFlawIdx + 1) % FLAW_POOL.length;
+  buildFlawExercise();
+}
+
+function buildFlawExercise() {
+  const item = FLAW_POOL[currentFlawIdx];
+  const container = document.getElementById('flaw-exercise-container');
+  if (!container) return;
+  container.innerHTML =
+    '<div class="annotated" style="margin-bottom:16px"><div class="annotation"><span class="ann-label" style="color:#555">Student</span><span class="ann-text">' + item.text + '</span></div></div>' +
+    '<p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">What is the biggest problem with this rebuttal?</p>' +
+    '<div class="metric-btns" style="flex-direction:column;align-items:flex-start" id="flaw-btns">' +
+      "<button class=\"metric-opt\" style=\"width:100%;text-align:left\" onclick=\"checkRebFlaw('A',this)\">A. The response is too short</button>" +
+      "<button class=\"metric-opt\" style=\"width:100%;text-align:left;margin-top:6px\" onclick=\"checkRebFlaw('B',this)\">B. There are no mechanisms identified, no numbered responses, and no impacts</button>" +
+      "<button class=\"metric-opt\" style=\"width:100%;text-align:left;margin-top:6px\" onclick=\"checkRebFlaw('C',this)\">C. The topic is wrong</button>" +
+      "<button class=\"metric-opt\" style=\"width:100%;text-align:left;margin-top:6px\" onclick=\"checkRebFlaw('D',this)\">D. The rebuttal is too aggressive</button>" +
+    '</div>' +
+    '<div class="exercise-result" id="reb-flaw-result" style="margin-top:12px"></div>';
+}
+
+function checkRebFlaw(answer, btn) {
+  const item = FLAW_POOL[currentFlawIdx];
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=true; });
+  const res = document.getElementById('reb-flaw-result');
+  if (answer === item.answer) {
+    btn.classList.add('correct');
+    res.className='exercise-result correct show';
+    res.textContent = item.correct;
+  } else {
+    btn.classList.add('wrong');
+    res.className='exercise-result wrong show';
+    res.textContent = item.wrong;
+  }
+}
+
+// ─── METRIC EXERCISE POOL ───
+const METRIC_EX_POOL = [
+  { opp: 'A ban on single-use plastics will hurt small businesses right now — they cannot afford to switch alternatives immediately.', you: 'The long-term environmental damage from continued plastic use will affect millions of Australians for generations.', correct: 'Magnitude', exp: 'Magnitude wins — your impact affects millions for generations, far greater in scale than their short-term business concern.' },
+  { opp: 'A great number of developing nations rely on plastic exports for economic survival.', you: 'Coastal communities facing plastic pollution are already experiencing health impacts today — this is not a future problem.', correct: 'Proximity', exp: 'Proximity wins — your impact is happening right now, today, while their concern is more future-focused.' },
+  { opp: 'Banning petrol cars by 2035 will cause widespread job losses in the automotive industry.', you: 'Climate change is already displacing populations and destroying ecosystems — every year of inaction makes the damage worse.', correct: 'Proximity', exp: 'Proximity wins — the damage is already occurring and escalating, making it more urgent than their workforce concern.' },
+  { opp: 'Lowering the voting age risks diluting the quality of democratic decision-making.', you: 'Millions of young people are directly affected by climate, education and housing policy — yet have no democratic voice at all.', correct: 'Magnitude', exp: 'Magnitude wins — the scale of disenfranchisement (millions affected) outweighs their speculative concern about vote quality.' },
+  { opp: 'Compulsory voting removes the freedom to choose not to participate in democracy.', you: 'Non-compulsory systems consistently produce governments elected by less than half the population — democratic legitimacy is already failing.', correct: 'Probability', exp: 'Probability wins — the harm of low democratic legitimacy is near certain and already demonstrated by evidence.' },
+  { opp: 'Regulating social media could limit freedom of speech for ordinary users.', you: 'Unregulated misinformation is already influencing elections and undermining democratic institutions on a global scale.', correct: 'Proximity', exp: 'Proximity wins — the harm is already occurring right now, making it more urgent than their hypothetical free speech concern.' }
+];
+
+let metricExCurrentIdx = [0, 1, 2];
+function refreshMetricEx(num) {
+  const next = (metricExCurrentIdx[num-1] + 1 + Math.floor(Math.random()*2)) % METRIC_EX_POOL.length;
+  metricExCurrentIdx[num-1] = next;
+  const item = METRIC_EX_POOL[next];
+  const container = document.getElementById('metric-ex-container-' + num);
+  if (!container) return;
+  container.querySelector('.metric-opp').textContent = item.opp;
+  container.querySelector('.metric-you').textContent = item.you;
+  container.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=false; b.classList.remove('correct','wrong'); });
+  const res = document.getElementById('ex-result-' + num);
+  if (res) { res.className='exercise-result'; res.textContent=''; }
+  // Store correct answer
+  container.setAttribute('data-correct', item.correct);
+  container.setAttribute('data-exp', item.exp);
+}
+
+
+
+function checkEx(num, metric, btn) {
+  const container = document.getElementById('metric-ex-container-' + num);
+  let correct, exp;
+  if (container && container.getAttribute('data-correct')) {
+    correct = container.getAttribute('data-correct');
+    exp = container.getAttribute('data-exp');
+  } else {
+    correct = EX_ANSWERS[num].correct;
+    exp = EX_ANSWERS[num].exp;
+  }
+  const res = document.getElementById('ex-result-' + num);
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=true; });
+  if (metric === correct) {
+    btn.classList.add('correct');
+    res.className='exercise-result correct show'; res.textContent='Correct! ' + exp;
+  } else {
+    btn.classList.add('wrong');
+    res.className='exercise-result wrong show';
+    res.textContent='Not quite. Think about what makes your impact stronger — is it bigger in scale, more certain, or more immediate?';
+  }
+}
+
+// ─── SPOT THE METRIC POOL ───
+const SPOT_POOL = [
+  { text: 'This is happening right now — children in rural areas are already missing school because families cannot afford bus fares.', correct: 'Proximity', hint: 'Right now and already are proximity language — the impact is immediate.' },
+  { text: 'A great number of low-income families — hundreds of thousands across Australia — would benefit directly from free fares.', correct: 'Magnitude', hint: 'A great number and hundreds of thousands are magnitude language — it is about scale.' },
+  { text: 'It is near certain that without intervention, emissions will continue to rise — every major climate model confirms it.', correct: 'Probability', hint: 'Near certain and every model confirms it are probability language — it is about likelihood.' },
+  { text: 'The harm is already unfolding today — coastal communities are experiencing flooding, displacement and loss right now.', correct: 'Proximity', hint: 'Already, today and right now all signal proximity — the impact is current and immediate.' },
+  { text: 'The scale here is staggering — over a billion people globally lack access to clean water, and this number is growing.', correct: 'Magnitude', hint: 'Over a billion people and the scale is staggering are magnitude language — it is about how many are affected.' },
+  { text: 'The probability of escalation is high — every historical precedent shows that unchecked inequality leads to social unrest.', correct: 'Probability', hint: 'The probability is high and every precedent shows are probability language — it is about how likely the harm is.' },
+  { text: 'Millions of young people are already engaged in political discourse — they are not waiting for permission to care.', correct: 'Magnitude', hint: 'Millions and already engaged signal both magnitude and proximity — the dominant framing is scale.' },
+  { text: 'This is not a future risk — it is already happening. Species extinction rates are at their highest in recorded history right now.', correct: 'Proximity', hint: 'Not a future risk and right now are strong proximity signals.' }
+];
+
+let currentSpotSet = [];
+function refreshSpotEx() {
+  buildSpotExercise();
+}
+
+function buildSpotExercise() {
+  const shuffled = shuffleArray(SPOT_POOL);
+  currentSpotSet = shuffled.slice(0, 3);
+  const containers = [1,2,3].map(function(i){ return document.getElementById('spot-container-' + i); });
+  containers.forEach(function(c, i) {
+    if (!c || !currentSpotSet[i]) return;
+    const item = currentSpotSet[i];
+    c.querySelector('.exercise-impact').textContent = item.text;
+    c.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=false; b.classList.remove('correct','wrong'); });
+    const res = document.getElementById('spot-result-' + (i+1));
+    if (res) { res.className='exercise-result'; res.textContent=''; }
+  });
+}
+
+function checkSpot(num, metric, btn) {
+  const item = currentSpotSet[num-1];
+  if (!item) return;
+  const res = document.getElementById('spot-result-' + num);
+  btn.parentElement.querySelectorAll('.metric-opt').forEach(function(b){ b.disabled=true; });
+  if (metric === item.correct) {
+    btn.classList.add('correct');
+    res.className='exercise-result correct show'; res.textContent='Correct! ' + item.hint;
+  } else {
+    btn.classList.add('wrong');
+    res.className='exercise-result wrong show'; res.textContent='Not quite. ' + item.hint;
+  }
+}
+
+function showSpeakerStructure(val) {
+  ['aff1','neg1','aff2','neg2','aff3','neg3'].forEach(function(k) {
+    const el = document.getElementById('structure-' + k);
+    if (el) el.style.display = k === val ? 'block' : 'none';
+  });
+}
+
+function showSpeakerExample(val) {
+  document.querySelectorAll('.speaker-example').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  const target = document.getElementById('speaker-example-' + val);
+  if (target) target.style.display = 'block';
+}
+
+// ─── FIREBASE CONFIG ───
+const FB_API_KEY = 'AIzaSyAabLsIVTsb7DUEuG2ui_Dv7uellUu7lOA';
+const FB_PROJECT = 'debatewebsite-223a8';
+const FB_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
+const FB_DB_URL = 'https://firestore.googleapis.com/v1/projects/' + FB_PROJECT + '/databases/(default)/documents';
+
+let currentUser = null; // { idToken, localId, displayName, email }
+
+// ─── AUTH HELPERS ───
+function switchTab(tab) {
+  const isSignup = tab === 'signup';
+  document.getElementById('tab-signin').classList.toggle('active', !isSignup);
+  document.getElementById('tab-signup').classList.toggle('active', isSignup);
+  document.getElementById('name-field').style.display = isSignup ? 'block' : 'none';
+  document.getElementById('auth-submit').textContent = isSignup ? 'Create Account' : 'Sign In';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function handleAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const name = document.getElementById('auth-name').value.trim();
+  const isSignup = document.getElementById('tab-signup').classList.contains('active');
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+
+  if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; return; }
+  if (isSignup && !name) { errEl.textContent = 'Please enter your name.'; return; }
+
+  document.getElementById('auth-submit').textContent = 'Please wait…';
+  document.getElementById('auth-submit').disabled = true;
+
+  try {
+    const endpoint = isSignup ? ':signUp' : ':signInWithPassword';
+    const res = await fetch(FB_AUTH_URL + endpoint + '?key=' + FB_API_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true })
+    });
+    const data = await res.json();
+    if (data.error) {
+      const msgs = {
+        'EMAIL_EXISTS': 'That email is already registered.',
+        'INVALID_EMAIL': 'Please enter a valid email address.',
+        'WEAK_PASSWORD : Password should be at least 6 characters': 'Password must be at least 6 characters.',
+        'EMAIL_NOT_FOUND': 'No account found with that email.',
+        'INVALID_PASSWORD': 'Incorrect password.',
+        'INVALID_LOGIN_CREDENTIALS': 'Incorrect email or password.'
+      };
+      errEl.textContent = msgs[data.error.message] || 'Something went wrong. Please try again.';
+      return;
+    }
+
+    currentUser = { idToken: data.idToken, refreshToken: data.refreshToken, localId: data.localId, email: data.email, displayName: name || data.displayName || data.email.split('@')[0] };
+    localStorage.setItem('db_user', JSON.stringify({ localId: data.localId, email: data.email, displayName: currentUser.displayName, refreshToken: data.refreshToken }));
+
+    if (isSignup) {
+      // Update display name
+      await fetch(FB_AUTH_URL + ':update?key=' + FB_API_KEY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: data.idToken, displayName: name, returnSecureToken: false })
+      });
+      // Create user doc
+      await fbSetDoc('users/' + data.localId, { name: {stringValue: name}, email: {stringValue: data.email}, debates: {integerValue: 0}, totalScore: {integerValue: 0}, bestScore: {integerValue: 0}, totalPoints: {integerValue: 0} });
+    }
+
+    showProfile();
+    updateNavAccount();
+  } catch(e) {
+    errEl.textContent = 'Network error. Please try again.';
+  } finally {
+    document.getElementById('auth-submit').disabled = false;
+    document.getElementById('auth-submit').textContent = document.getElementById('tab-signup').classList.contains('active') ? 'Create Account' : 'Sign In';
+  }
+}
+
+function signOut() {
+  currentUser = null;
+  localStorage.removeItem('db_user');
+  document.getElementById('profile-view').style.display = 'none';
+  document.getElementById('auth-form').style.display = 'block';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('nav-account').textContent = 'Account';
+}
+
+async function showProfile() {
+  document.getElementById('auth-form').style.display = 'none';
+  document.getElementById('profile-view').style.display = 'block';
+  document.getElementById('profile-name-text').textContent = currentUser.displayName;
+  document.getElementById('profile-email-text').textContent = currentUser.email;
+  const savedImg = localStorage.getItem('db_avatar_img');
+  if (savedImg) {
+    applyAvatarImage(savedImg);
+  } else {
+    const avatarEl = document.getElementById('profile-avatar');
+    avatarEl.textContent = selectedAvatar || '🧑';
+    avatarEl.style.backgroundImage = '';
+  }
+  loadAnalytics();
+
+  try {
+    const doc = await fbGetDoc('users/' + currentUser.localId);
+    if (doc && doc.fields) {
+      const f = doc.fields;
+      const debates = parseInt(f.debates?.integerValue || 0);
+      const total = parseInt(f.totalScore?.integerValue || 0);
+      const best = parseInt(f.bestScore?.integerValue || 0);
+      const pts = parseInt(f.totalPoints?.integerValue || 0);
+      localStorage.setItem('db_cached_points', pts);
+      document.getElementById('stat-debates').textContent = debates;
+      document.getElementById('stat-avg').textContent = debates > 0 ? Math.round(total / debates) : '—';
+      document.getElementById('stat-best').textContent = best || '—';
+      document.getElementById('stat-points').textContent = pts.toLocaleString();
+      renderTitleBadge(pts);
+    }
+  } catch(e) { console.log('profile load error', e); }
+
+  loadHistory();
+}
+
+async function loadHistory() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch(FB_DB_URL + '/debates?pageSize=10', {
+      headers: { 'Authorization': 'Bearer ' + currentUser.idToken }
+    });
+    const data = await res.json();
+    const list = document.getElementById('history-list');
+    const docs = (data.documents || []).filter(function(d) {
+      return d.fields && d.fields.uid && d.fields.uid.stringValue === currentUser.localId;
+    });
+    if (!docs.length) {
+      list.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;padding:12px">No debates yet — head to the Topic Library!</p>';
+      return;
+    }
+    list.innerHTML = '';
+    docs.slice(0,8).forEach(function(d) {
+      const f = d.fields;
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      const hPts = parseInt(f.points?.integerValue || 0);
+      div.innerHTML = '<div class="history-topic">' + (f.topic?.stringValue || 'Unknown topic') + '</div>' +
+        '<div class="history-meta"><span>' + (f.side?.stringValue || '') + '</span><span>Score: ' + (f.score?.integerValue || '—') + '/10</span><span style="color:#6a4c8a;font-weight:600">+' + hPts + ' pts</span><span>' + (f.date?.stringValue || '') + '</span></div>';
+      list.appendChild(div);
+    });
+  } catch(e) { console.log('history error', e); }
+}
+
+async function saveDebateScore(score, argScore, rebScore) {
+  try {
+    const pts = calcPoints(argScore || score, rebScore || score, score);
+
+    // 1. Add debate doc
+    await fbAddDoc('debates', {
+      uid: {stringValue: currentUser.localId},
+      topic: {stringValue: debateTopic},
+      side: {stringValue: selectedSide},
+      score: {integerValue: score},
+      argScore: {integerValue: argScore || score},
+      rebScore: {integerValue: rebScore || score},
+      points: {integerValue: pts},
+      date: {stringValue: new Date().toLocaleDateString('en-AU')},
+      createdAt: {stringValue: new Date().toISOString()}
+    });
+
+    // 2. Get user doc
+    const doc = await fbGetDoc('users/' + currentUser.localId);
+
+    if (doc && doc.fields) {
+      const f = doc.fields;
+      const debates = parseInt(f.debates?.integerValue || 0) + 1;
+      const total = parseInt(f.totalScore?.integerValue || 0) + score;
+      const best = Math.max(parseInt(f.bestScore?.integerValue || 0), score);
+      const totalPts = parseInt(f.totalPoints?.integerValue || 0) + pts;
+
+      await fbSetDoc('users/' + currentUser.localId, {
+        name: f.name || {stringValue: currentUser.displayName},
+        email: {stringValue: currentUser.email},
+        debates: {integerValue: debates},
+        totalScore: {integerValue: total},
+        bestScore: {integerValue: best},
+        totalPoints: {integerValue: totalPts}
+      });
+    } else {
+      await fbSetDoc('users/' + currentUser.localId, {
+        name: {stringValue: currentUser.displayName},
+        email: {stringValue: currentUser.email},
+        debates: {integerValue: 1},
+        totalScore: {integerValue: score},
+        bestScore: {integerValue: score},
+        totalPoints: {integerValue: pts}
+      });
+    }
+  } catch(e) { }
+}
+
+function updateNavAccount() {
+  const btn = document.getElementById('nav-account');
+  if (currentUser) btn.textContent = currentUser.displayName.split(' ')[0];
+  else btn.textContent = 'Account';
+}
+
+// ─── FIRESTORE REST HELPERS ───
+async function refreshToken() {
+  if (!currentUser || !currentUser.refreshToken) return;
+  try {
+    const res = await fetch('https://securetoken.googleapis.com/v1/token?key=' + FB_API_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: currentUser.refreshToken })
+    });
+    const data = await res.json();
+    if (data.id_token) {
+      currentUser.idToken = data.id_token;
+      if (data.refresh_token) {
+        currentUser.refreshToken = data.refresh_token;
+        const saved = localStorage.getItem('db_user');
+        if (saved) {
+          const u = JSON.parse(saved);
+          u.refreshToken = data.refresh_token;
+          localStorage.setItem('db_user', JSON.stringify(u));
+        }
+      }
+    }
+  } catch(e) { }
+}
+
+async function fbAuthHeader() {
+  // Refresh token if needed before every request
+  await refreshToken();
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.idToken };
+}
+
+async function fbSetDoc(path, fields) {
+  const headers = await fbAuthHeader();
+  const res = await fetch(FB_DB_URL + '/' + path + '?updateMask.fieldPaths=' + Object.keys(fields).join('&updateMask.fieldPaths='), {
+    method: 'PATCH', headers, body: JSON.stringify({ fields })
+  });
+  const data = await res.json();
+  return data;
+}
+
+async function fbGetDoc(path) {
+  const headers = await fbAuthHeader();
+  const res = await fetch(FB_DB_URL + '/' + path, { headers });
+  const data = await res.json();
+  return data;
+}
+
+async function fbAddDoc(collection, fields) {
+  const headers = await fbAuthHeader();
+  const res = await fetch(FB_DB_URL + '/' + collection, {
+    method: 'POST', headers, body: JSON.stringify({ fields })
+  });
+  const data = await res.json();
+  return data;
+}
+
+// ─── RESTORE SESSION ───
+window.addEventListener('load', function() {
+  const savedImg = localStorage.getItem('db_avatar_img');
+  selectedAvatar = savedImg ? null : (localStorage.getItem('db_avatar') || '🧑');
+  const saved = localStorage.getItem('db_user');
+  if (saved) {
+    try {
+      const u = JSON.parse(saved);
+      if (u.refreshToken) {
+        // Restore session by getting a fresh idToken using refreshToken
+        currentUser = { idToken: null, refreshToken: u.refreshToken, localId: u.localId, email: u.email, displayName: u.displayName };
+        // Get fresh token immediately
+        fetch('https://securetoken.googleapis.com/v1/token?key=' + FB_API_KEY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: u.refreshToken })
+        }).then(function(r) { return r.json(); }).then(function(data) {
+          if (data.id_token) {
+            currentUser.idToken = data.id_token;
+            currentUser.refreshToken = data.refresh_token;
+            localStorage.setItem('db_user', JSON.stringify({ localId: u.localId, email: u.email, displayName: u.displayName, refreshToken: data.refresh_token }));
+          }
+          // Show profile
+          document.getElementById('nav-account').textContent = (u.displayName || u.email).split(' ')[0];
+          document.getElementById('auth-form').style.display = 'none';
+          document.getElementById('profile-view').style.display = 'block';
+          document.getElementById('profile-name-text').textContent = u.displayName || u.email;
+          document.getElementById('profile-email-text').textContent = u.email;
+          loadProfile();
+        }).catch(function() {
+          document.getElementById('nav-account').textContent = (u.displayName || u.email).split(' ')[0];
+        });
+      }
+    } catch(e) {}
+  }
+});
+
+// ─── HOOK INTO SCORE SCREEN ───
+const _origEndDebate = endDebate;
+
+
+// ─── ANALYTICS CHART ───
+async function loadAnalytics() {
+  if (!currentUser) return;
+  try {
+    // Query debates for this user
+    const res = await fetch(
+      'https://firestore.googleapis.com/v1/projects/' + FB_PROJECT + '/databases/(default)/documents:runQuery',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.idToken },
+        body: JSON.stringify({
+          structuredQuery: {
+            from: [{ collectionId: 'debates' }],
+            where: { fieldFilter: { field: { fieldPath: 'uid' }, op: 'EQUAL', value: { stringValue: currentUser.localId } } },
+            orderBy: [{ field: { fieldPath: 'createdAt' }, direction: 'DESCENDING' }],
+            limit: 10
+          }
+        })
+      }
+    );
+    const results = await res.json();
+    const docs = results
+      .filter(function(r) { return r.document && r.document.fields; })
+      .map(function(r) { return r.document.fields; })
+      .reverse(); // oldest first for chart
+
+    renderScoreChart(docs);
+    renderSkillBreakdown(docs);
+  } catch(e) { console.log('analytics error', e); }
+}
+
+function renderTitleBadge(points) {
+  const t = getTitle(points);
+  const next = getNextTitle(points);
+  const badge = document.getElementById('profile-title-badge');
+  if (badge) {
+    badge.innerHTML = '<div class="title-badge">' + t.icon + ' ' + t.title + '</div>';
+  }
+  const nextRow = document.getElementById('next-title-row');
+  if (next && nextRow) {
+    nextRow.style.display = 'block';
+    const prevPts = t.pts;
+    const needed = next.pts - prevPts;
+    const earned = points - prevPts;
+    const pct = Math.min(100, Math.round((earned / needed) * 100));
+    document.getElementById('next-title-label').textContent = next.icon + ' ' + next.title + ' next';
+    document.getElementById('next-title-pts').textContent = (next.pts - points) + ' pts to go';
+    document.getElementById('title-progress-bar').style.width = pct + '%';
+  } else if (nextRow) {
+    nextRow.style.display = 'none';
+  }
+}
+
+function renderScoreChart(docs) {
+  const container = document.getElementById('score-chart-bars');
+  if (!docs.length) {
+    container.innerHTML = '<div class="chart-no-data">Complete debates to see your score history</div>';
+    return;
+  }
+  container.innerHTML = '';
+  docs.forEach(function(f, i) {
+    const score = parseInt(f.score?.integerValue || 0);
+    const pct = (score / 10) * 100;
+    const col = document.createElement('div');
+    col.className = 'chart-bar-col';
+    col.innerHTML =
+      '<div class="chart-bar-val">' + score + '</div>' +
+      '<div class="chart-bar" style="height:' + pct + '%;background:' + getBarColor(score) + '" title="Score: ' + score + '/10"></div>' +
+      '<div class="chart-bar-lbl">' + (f.date?.stringValue || '#' + (i+1)) + '</div>';
+    container.appendChild(col);
+  });
+}
+
+function renderSkillBreakdown(docs) {
+  const container = document.getElementById('skill-rows');
+  if (!docs.length) {
+    container.innerHTML = '<div class="chart-no-data">No data yet</div>';
+    return;
+  }
+
+  const skills = [
+    { key: 'score', label: 'Overall' },
+    { key: 'argScore', label: 'Arguments' },
+    { key: 'rebScore', label: 'Rebuttals' }
+  ];
+
+  container.innerHTML = '';
+  skills.forEach(function(skill) {
+    const scores = docs.map(function(f) { return parseInt(f[skill.key]?.integerValue || 0); }).filter(function(s) { return s > 0; });
+    if (!scores.length) return;
+    const avg = Math.round(scores.reduce(function(a,b){ return a+b; }, 0) / scores.length);
+    const pct = (avg / 10) * 100;
+    const row = document.createElement('div');
+    row.className = 'skill-row';
+    row.innerHTML =
+      '<span class="skill-name">' + skill.label + '</span>' +
+      '<div class="skill-bar-bg"><div class="skill-bar-fill" style="width:' + pct + '%;background:' + getBarColor(avg) + '"></div></div>' +
+      '<span class="skill-score">' + avg + '/10</span>';
+    container.appendChild(row);
+  });
+}
+
+function getBarColor(score) {
+  if (score >= 8) return '#1a5c3a';
+  if (score >= 6) return '#111016';
+  if (score >= 4) return '#b83535';
+  return '#d4a8a8';
+}
+
+
+// ─── AVATAR ───
+const AVATARS = ['🧑','👩','👨','🧒','👧','👦','🧑‍💻','👩‍💻','👨‍💻','🧑‍🎓','👩‍🎓','👨‍🎓','🦸','🦸‍♀️','🦸‍♂️','🧙','🧙‍♀️','🧙‍♂️','🐱','🐶','🦊','🐼','🦁','🐯'];
+let selectedAvatar = localStorage.getItem('db_avatar') || '🧑';
+
+function buildAvatarGrid() {
+  const grid = document.getElementById('avatar-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  AVATARS.forEach(function(emoji) {
+    const btn = document.createElement('div');
+    btn.className = 'avatar-opt' + (emoji === selectedAvatar ? ' selected' : '');
+    btn.textContent = emoji;
+    btn.onclick = function() { selectAvatar(emoji); };
+    grid.appendChild(btn);
+  });
+}
+
+function selectAvatar(emoji) {
+  selectedAvatar = emoji;
+  localStorage.setItem('db_avatar', emoji);
+  localStorage.removeItem('db_avatar_img');
+  const avatarEl = document.getElementById('profile-avatar');
+  avatarEl.textContent = emoji;
+  avatarEl.style.backgroundImage = '';
+  document.querySelectorAll('.avatar-opt').forEach(function(b) {
+    b.classList.toggle('selected', b.textContent === emoji);
+  });
+  document.querySelectorAll('.msg.user .msg-avatar').forEach(function(el) {
+    el.textContent = emoji;
+    el.style.backgroundImage = '';
+  });
+  toggleAvatarPicker();
+}
+
+function toggleAvatarPicker() {
+  const picker = document.getElementById('avatar-picker');
+  const isOpen = picker.style.display !== 'none';
+  picker.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) buildAvatarGrid();
+}
+
+function handleAvatarUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    // Store as custom image
+    localStorage.setItem('db_avatar_img', dataUrl);
+    localStorage.removeItem('db_avatar');
+    selectedAvatar = null;
+    applyAvatarImage(dataUrl);
+    toggleAvatarPicker();
+  };
+  reader.readAsDataURL(file);
+}
+
+function applyAvatarImage(dataUrl) {
+  const avatarEl = document.getElementById('profile-avatar');
+  if (avatarEl) {
+    avatarEl.textContent = '';
+    avatarEl.style.backgroundImage = 'url(' + dataUrl + ')';
+    avatarEl.style.backgroundSize = 'cover';
+    avatarEl.style.backgroundPosition = 'center';
+  }
+  // Also update chat avatars
+  document.querySelectorAll('.msg.user .msg-avatar').forEach(function(el) {
+    el.textContent = '';
+    el.style.backgroundImage = 'url(' + dataUrl + ')';
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+  });
+}
+
+
+// ─── POINTS SYSTEM ───
+function calcPoints(args, rebs, overall) {
+  return parseInt(args) * parseInt(rebs) * parseInt(overall) * 15;
+}
+
+
+// ─── TITLE SYSTEM ───
+const TITLES = [
+  { pts: 0,      title: 'Novice',         icon: '🌱' },
+  { pts: 5000,   title: 'Debater',        icon: '🎤' },
+  { pts: 15000,  title: 'Advocate',       icon: '📜' },
+  { pts: 30000,  title: 'Orator',         icon: '🏛️' },
+  { pts: 50000,  title: 'Rhetorician',    icon: '🔥' },
+  { pts: 75000,  title: 'Barrister',      icon: '⚖️' },
+  { pts: 100000, title: 'Senior Counsel', icon: '👑' },
+  { pts: 150000, title: 'Grand Orator',   icon: '🏆' },
+  { pts: 200000, title: 'Debate Master',  icon: '⭐' }
+];
+
+function getTitle(points) {
+  let current = TITLES[0];
+  for (let i = 0; i < TITLES.length; i++) {
+    if (points >= TITLES[i].pts) current = TITLES[i];
+    else break;
+  }
+  return current;
+}
+
+function getNextTitle(points) {
+  for (let i = 0; i < TITLES.length; i++) {
+    if (TITLES[i].pts > points) return TITLES[i];
+  }
+  return null;
+}
+
+
+// ─── TITLES & POINTS ───
+
+// Init
+buildTopics();
+</script>
+</body>
+</html>
